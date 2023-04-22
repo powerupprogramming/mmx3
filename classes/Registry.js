@@ -1,6 +1,8 @@
 import { Entity } from "./Entity.js";
-import { TransitionComponent, CharacterComponent, PositionComponent, SpriteComponent, MovementComponent, AnimationComponent, CollisionComponent, PlayerComponent, ActionableComponent, HitboxComponent, NodeComponent, HealthComponent } from "./Component.js";
-import { AnimationSystem, ActionableSystem, CollisionSystem, MovementSystem, RenderSystem, TransitionSystem, HitboxSystem, DamageSystem } from "./System.js"
+import { TransitionComponent, PositionComponent, SpriteComponent, MovementComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent } from "./Component.js";
+import { AnimationSystem, ActionableSystem, CollisionSystem, MovementSystem, RenderSystem, TransitionSystem, HitboxSystem, HealthSystem, ItemSystem } from "./System.js"
+import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, MOVEMENT, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
+import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HITBOX_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM, HEALTH_SYSTEM, ITEM_SYSTEM } from "../constants/SystemConstants.js";
 
 
 
@@ -15,12 +17,12 @@ class Registry {
         /*
         Fixed array length for components - 1st order
         map for second order
-        {
-            "Position": {
-                1: PositionComponent
+            {
+                "Position": {
+                    1: PositionComponent
+                }
             }
-        }
-    */
+        */
         this.componentEntityMapping = {}
 
 
@@ -71,86 +73,18 @@ class Registry {
     */
 
     // components is an array
+    // Currently, if entity has components that are added on later, the entity will not be put into the proper system
+
     createEntity = (components) => {
-        const newEntity = new Entity(this.numberOfEntities++, this);
-        let newEntityComponents = {}
+        const newEntity = new Entity(this.numberOfEntities, this);
         for (let i = 0; i < components.length; i++) {
             const component = components[i];
-            switch (component["name"]) {
-                case "Position": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Position"] = new PositionComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Movement": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Movement"] = new MovementComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Sprite": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Sprite"] = new SpriteComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Animation": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Animation"] = new AnimationComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Player": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Player"] = new PlayerComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Collision": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Collision"] = new CollisionComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Transition": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Transition"] = new TransitionComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Character": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Character"] = new CharacterComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Actionable": {
-
-                    const componentObj = component["value"];
-                    newEntityComponents["Actionable"] = new ActionableComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Hitbox": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Hitbox"] = new HitboxComponent(component["name"], componentObj);
-                    break;
-                }
-                case "Health": {
-                    const componentObj = component["value"];
-                    newEntityComponents["Health"] = new HealthComponent(component["name"], componentObj);
-                    break;
-                }
-
-                case "Node": {
-                    const componentObj = component["value"];
-
-                    newEntityComponents["Node"] = new NodeComponent(component["name"], componentObj);
-                    break;
-                }
-
-                default:
-                    break;
-            }
+            this.addComponentToEntity(component)
         }
 
 
-        // TODO: THIS IS WHAT MUST BE CHANGED
-        newEntity.components = newEntityComponents;
         this.entitiesToBeAdded.push(newEntity);
-
+        this.numberOfEntities++;
         return newEntity;
     }
 
@@ -159,36 +93,40 @@ class Registry {
     addSystem = (systemType) => {
         let newSystem;
         switch (systemType) {
-            case "RenderSystem": {
-                newSystem = new RenderSystem(systemType);
+            case RENDER_SYSTEM: {
+                newSystem = new RenderSystem(RENDER_SYSTEM);
                 break;
             }
-            case "AnimationSystem": {
-                newSystem = new AnimationSystem(systemType);
+            case ANIMATION_SYSTEM: {
+                newSystem = new AnimationSystem(ANIMATION_SYSTEM);
                 break;
             }
-            case "CollisionSystem": {
-                newSystem = new CollisionSystem(systemType);
+            case COLLISION_SYSTEM: {
+                newSystem = new CollisionSystem(COLLISION_SYSTEM);
                 break;
             }
-            case "MovementSystem": {
-                newSystem = new MovementSystem(systemType);
+            case MOVEMENT_SYSTEM: {
+                newSystem = new MovementSystem(MOVEMENT_SYSTEM);
                 break;
             }
-            case "TransitionSystem": {
-                newSystem = new TransitionSystem(systemType);
+            case TRANSITION_SYSTEM: {
+                newSystem = new TransitionSystem(TRANSITION_SYSTEM);
                 break;
             }
-            case "ActionableSystem": {
-                newSystem = new ActionableSystem(systemType);
+            case ACTIONABLE_SYSTEM: {
+                newSystem = new ActionableSystem(ACTIONABLE_SYSTEM);
                 break;
             }
-            case "DamageSystem": {
-                newSystem = new DamageSystem(systemType);
+            case HITBOX_SYSTEM: {
+                newSystem = new HitboxSystem(HITBOX_SYSTEM);
                 break;
             }
-            case "HitboxSystem": {
-                newSystem = new HitboxSystem(systemType);
+            case HEALTH_SYSTEM: {
+                newSystem = new HealthSystem(HEALTH_SYSTEM);
+                break;
+            }
+            case ITEM_SYSTEM: {
+                newSystem = new ItemSystem(ITEM_SYSTEM);
                 break;
             }
             default: {
@@ -196,6 +134,134 @@ class Registry {
             }
         }
         this.systems[systemType] = newSystem;
+    }
+
+
+    addComponentToEntity = (component) => {
+        console.log("TEST ", this.componentEntityMapping[POSITION])
+        console.log("TEST ", component["name"])
+
+        switch (component["name"]) {
+            case POSITION: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[POSITION]) {
+
+                    this.componentEntityMapping[POSITION] = {}
+                }
+                this.componentEntityMapping[POSITION][this.numberOfEntities] = new PositionComponent(POSITION, componentObj);
+                break;
+            }
+            case MOVEMENT: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[MOVEMENT]) {
+                    this.componentEntityMapping[MOVEMENT] = {};
+                }
+                this.componentEntityMapping[MOVEMENT][this.numberOfEntities] = new MovementComponent(MOVEMENT, componentObj);
+                break;
+            }
+            case SPRITE: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[SPRITE]) {
+                    this.componentEntityMapping[SPRITE] = {};
+                }
+                this.componentEntityMapping[SPRITE][this.numberOfEntities] = new SpriteComponent(SPRITE, componentObj);
+                break;
+            }
+            case ANIMATION: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[ANIMATION]) {
+                    this.componentEntityMapping[ANIMATION] = {};
+                }
+                this.componentEntityMapping[ANIMATION][this.numberOfEntities] = new AnimationComponent(ANIMATION, componentObj);
+                break;
+            }
+            // case PLAYER: {
+            //     const componentObj = component["value"];
+            //     if (!this.componentEntityMapping[PLAYER]) {
+            //         this.componentEntityMapping[PLAYER] = {};
+            //     }
+            //     this.componentEntityMapping[PLAYER][this.numberOfEntities] = new PlayerComponent(PLAYER, componentObj);
+            //     break;
+            // }
+            case COLLISION: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[COLLISION]) {
+                    this.componentEntityMapping[COLLISION] = {};
+                }
+                this.componentEntityMapping[COLLISION][this.numberOfEntities] = new CollisionComponent(COLLISION, componentObj);
+                break;
+            }
+            case TRANSITION: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[TRANSITION]) {
+                    this.componentEntityMapping[TRANSITION] = {};
+                }
+                this.componentEntityMapping[TRANSITION][this.numberOfEntities] = new TransitionComponent(TRANSITION, componentObj);
+                break;
+            }
+            case CHARACTER: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[CHARACTER]) {
+                    this.componentEntityMapping[CHARACTER] = {};
+                }
+                this.componentEntityMapping[CHARACTER][this.numberOfEntities] = new CharacterComponent(CHARACTER, componentObj);
+                break;
+            }
+            case ACTIONABLE: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[ACTIONABLE]) {
+                    this.componentEntityMapping[ACTIONABLE] = {};
+                }
+                this.componentEntityMapping[ACTIONABLE][this.numberOfEntities] = new ActionableComponent(ACTIONABLE, componentObj);
+                break;
+            }
+            case HITBOX: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[HITBOX]) {
+                    this.componentEntityMapping[HITBOX] = {};
+                }
+                this.componentEntityMapping[HITBOX][this.numberOfEntities] = new HitboxComponent(HITBOX, componentObj);
+                break;
+            }
+            case HEALTH: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[HEALTH]) {
+                    this.componentEntityMapping[HEALTH] = {};
+                }
+                this.componentEntityMapping[HEALTH][this.numberOfEntities] = new HealthComponent(HEALTH, componentObj);
+                break;
+            }
+
+            case ITEM: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[ITEM]) {
+                    this.componentEntityMapping[ITEM] = {};
+                }
+                this.componentEntityMapping[ITEM][this.numberOfEntities] = new ItemComponent(ITEM, componentObj);
+                break;
+            }
+            case ITEMDROP: {
+                const componentObj = component["value"];
+                if (!this.componentEntityMapping[ITEMDROP]) {
+                    this.componentEntityMapping[ITEMDROP] = {};
+                }
+                this.componentEntityMapping[ITEMDROP][this.numberOfEntities] = new ItemDropComponent(ITEMDROP, componentObj);
+                break;
+            }
+
+
+
+
+            default: {
+                break;
+            }
+
+
+
+        }
+
+        console.log("This componentEntityMapping was updated for component: ", component["name"], " and id: ", this.numberOfEntities, " here is final result: ", this.componentEntityMapping)
+
     }
 
     //4
@@ -208,9 +274,12 @@ class Registry {
             const componentRequirements = system["componentRequirements"];
 
             for (let i = 0; i < componentRequirements.length; i++) {
-                const req = componentRequirements[i];
-                // TODO: THIS MUST BE CHANGED, ENTITY CANNOT HAVE COMPONENTS 
-                if (entity.components[req] === undefined) {
+                const req = componentRequirements[i];           // req is name of component like MOVEMENT or NODE
+                const entityId = entity.id;
+                console.log("SYSTEM: ", system)
+                console.log("adf; ", req)
+                console.log("ddd; ", this.componentEntityMapping[req])
+                if (this.componentEntityMapping[req] === undefined || this.componentEntityMapping[req][entityId] === undefined) {
                     addToSystem = false;
                     break;
                 }
@@ -237,4 +306,4 @@ class Registry {
     }
 }
 
-export { Registry };
+export default Registry;

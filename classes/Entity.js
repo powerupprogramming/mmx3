@@ -1,4 +1,3 @@
-// import {Registry} from "./Registry.js"
 
 class Entity {
     constructor(id, registry) {
