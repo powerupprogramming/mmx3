@@ -52,7 +52,7 @@ class Game {
         document.addEventListener("keydown", this.handleUserInput)
 
 
-        const p = CreatePositionComponent(50, 50, 50, 50);
+        const p = CreatePositionComponent(250, 50, 50, 50);
         const s = CreateSpriteComponent("./assets/X-sprites.png", { x: 0, y: 60, width: 50, height: 50 });
         const a = CreateMegamanXAnimationComponent();
         const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
@@ -60,14 +60,19 @@ class Game {
 
         this.player = this.registry.createEntity([p, s, a, m, c]);
 
-        for (let i = 0; i < 20; i++) {
-            const xVal = i * 50;
-            const newP = CreatePositionComponent(xVal, 150, 50, 50);
-            const block = this.registry.createEntity([newP, s, c]);
+        for (let i = 0; i < 5; i++) {
+            const xVal = i * 50 + 200;
+            const newP = CreatePositionComponent(xVal, 400, 50, 50);
+            this.registry.createEntity([newP, s, c]);
         }
 
+        const p2 = CreatePositionComponent(400, 100, 50, 50);
+        this.registry.createEntity([p2, s, c]);
 
-        console.log(this.registry.componentEntityMapping)
+        const p3 = CreatePositionComponent(250, 100, 50, 50);
+        this.registry.createEntity([p3, s, c]);
+
+
 
     }
 
@@ -203,12 +208,14 @@ class Game {
                         break;
                     }
                     case "c": {
-
+                        // jump
+                        RigidBody.velocity.y = -300;
                         break;
                     }
                     case "p": {
                         this.isPaused = !this.isPaused;
                     }
+
                     default: {
                         break;
                     }

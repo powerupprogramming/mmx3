@@ -132,30 +132,36 @@ class CollisionSystem extends System {
 
                 const { x: px, y: py, width: pwidth, height: pheight } = getComponent(POSITION, player.id)
                 const { x: ex, y: ey, width: ewidth, height: eheight } = getComponent(POSITION, entity.id)
-                const Movement = getComponent(RIGIDBODY, player.id)
+                const RigidBody = getComponent(RIGIDBODY, player.id)
                 const Collision = getComponent(COLLISION, player.id)
 
-                const { velocity } = Movement;
+                const { velocity } = RigidBody;
 
+                const playerBottomPoint = { x: px + (pwidth / 2), y: py + pheight };
+                const playerRightPoint = { x: px + pwidth, y: py + (pheight / 2) };
+
+                const playerLeftPoint = { x: px, y: py + (pheight / 2) };
+                const playerTopPoint = { x: px + (pwidth / 2), y: py }
+
+                // the width is not very applicable but we'll use 1
                 if (
-                    px < ex + ewidth &&
-                    px + pwidth + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
-                    py < ey + eheight &&
-                    py + pheight + (velocity.y * deltaTime) + velocity.knockbackY > ey
+                    playerBottomPoint.x < ex + ewidth &&
+                    playerBottomPoint.x + 1 + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
+                    playerBottomPoint.y < ey + eheight &&
+                    playerBottomPoint.y + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
 
 
 
                     // TODO: change collision component to hold which exact side there is collision on
-                    const side = DetermineDirectionOfContact(player, entity);
 
-                    console.log("side: ", side);
-                    if (side === "left" || side === "right") {
-                        Collision.collisionX = true;
-                    }
-                    else {
-                        Collision.collisionY = true;
-                    }
+                    // console.log("side: ", side);
+                    // if (side === "left" || side === "right") {
+                    //     Collision.collisionX = true;
+                    // }
+                    // else {
+                    Collision.collisionY = true;
+                    // }
 
                     // if (Movement.vX !== 0 || Movement.knockbackVx) {
                     //     Collision.collisionX = true
@@ -166,6 +172,86 @@ class CollisionSystem extends System {
                     // }
 
                 }
+
+                if (
+                    playerTopPoint.x < ex + ewidth &&
+                    playerTopPoint.x + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
+                    playerTopPoint.y < ey + eheight &&
+                    playerTopPoint.y + (velocity.y * deltaTime) + velocity.knockbackY > ey
+                ) {
+
+
+
+                    // TODO: change collision component to hold which exact side there is collision on
+
+                    // console.log("side: ", side);
+                    // if (side === "left" || side === "right") {
+                    //     Collision.collisionX = true;
+                    // }
+                    // else {
+                    Collision.collisionY = true;
+                    // }
+
+                    // if (Movement.vX !== 0 || Movement.knockbackVx) {
+                    //     Collision.collisionX = true
+                    // }
+
+                    // if (Movement.vY !== 0 || Movement.knockbackVy) {
+                    //     Collision.collisionY = true
+                    // }
+
+                }
+
+                if (
+                    playerRightPoint.x < ex + ewidth &&
+                    playerRightPoint.x + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
+                    playerRightPoint.y < ey + eheight &&
+                    playerRightPoint.y + 1 + (velocity.y * deltaTime) + velocity.knockbackY > ey
+                ) {
+
+
+
+                    // TODO: change collision component to hold which exact side there is collision on
+                    Collision.collisionX = true;
+
+
+                }
+                if (
+                    playerLeftPoint.x < ex + ewidth &&
+                    playerLeftPoint.x + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
+                    playerLeftPoint.y < ey + eheight &&
+                    playerLeftPoint.y + 1 + (velocity.y * deltaTime) + velocity.knockbackY > ey
+                ) {
+
+
+
+                    // TODO: change collision component to hold which exact side there is collision on
+                    Collision.collisionX = true;
+
+
+                }
+
+                // if (
+                //     px < ex + ewidth &&
+                //     px + pwidth + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
+                //     py < ey + eheight &&
+                //     py + pheight + (velocity.y * deltaTime) + velocity.knockbackY > ey
+                // ) {
+
+
+
+                //     // TODO: change collision component to hold which exact side there is collision on
+                //     const side = DetermineDirectionOfContact(player, entity);
+
+                //     console.log("side: ", side);
+                //     if (side === "left" || side === "right") {
+                //         Collision.collisionX = true;
+                //     }
+                //     else {
+                //         Collision.collisionY = true;
+                //     }
+
+                // }
 
 
             }
@@ -704,10 +790,18 @@ const DetermineDirectionOfContact = (receiver, sender) => {
             side = "bottom";
         }
     }
-
     return side;
-
 }
+
+// const DeterminePointOfContact = (receiver, sender) => {
+//     const rPosition = receiver.registry.getComponent(POSITION, receiver.id);
+//     const sPosition = receiver.registry.getComponent(POSITION, sender.id);
+
+//     // Test bottom, get point
+//     const point = { x: rPosition.x + rPosition.width / 2, y: rPosition.y }
+
+
+// }
 
 export { MovementSystem, RenderSystem, ItemSystem, AnimationSystem, CollisionSystem, HealthSystem, TransitionSystem, ActionableSystem, HitboxSystem };
 
