@@ -1,6 +1,8 @@
 import Registry from "./classes/Registry.js";
+import { RUNNING, STANDING } from "./constants/AnimationComponentConstants.js";
+import { ANIMATION, RIGIDBODY } from "./constants/ComponentConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateMovementComponent, CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
+import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
 
 export const canvas = document.getElementById("gameScreen");
 canvas.width = window.innerWidth;
@@ -53,13 +55,17 @@ class Game {
         const p = CreatePositionComponent(50, 50, 50, 50);
         const s = CreateSpriteComponent("./assets/X-sprites.png", { x: 0, y: 60, width: 50, height: 50 });
         const a = CreateMegamanXAnimationComponent();
-        const m = CreateMovementComponent(0, 0, 0, 0);
+        const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
         const c = CreateCollisionComponent();
 
         this.player = this.registry.createEntity([p, s, a, m, c]);
 
-        const newP = CreatePositionComponent(150, 50, 50, 50);
-        const block = this.registry.createEntity([newP, s, c]);
+        for (let i = 0; i < 20; i++) {
+            const xVal = i * 50;
+            const newP = CreatePositionComponent(xVal, 150, 50, 50);
+            const block = this.registry.createEntity([newP, s, c]);
+        }
+
 
         console.log(this.registry.componentEntityMapping)
 
@@ -162,6 +168,8 @@ class Game {
         const { key, type } = e;
 
         if (this.player) {
+            const RigidBody = this.player.registry.getComponent(RIGIDBODY, this.player.id);
+            const Animation = this.player.registry.getComponent(ANIMATION, this.player.id);
             if (type === "keydown") {
 
                 switch (key) {
@@ -170,7 +178,8 @@ class Game {
                         break;
                     }
                     case "a": {
-
+                        RigidBody.velocity.x = -400;
+                        Animation.mode = RUNNING;
                         break;
                     }
 
@@ -179,6 +188,9 @@ class Game {
                         break;
                     }
                     case "d": {
+                        RigidBody.velocity.x = 400;
+                        Animation.mode = RUNNING;
+                        break
 
                         break;
                     }
@@ -206,15 +218,22 @@ class Game {
             else if (type === "keyup") {
                 switch (key) {
                     case "w": {
+
                         break;
                     }
                     case "s": {
                         break;
                     }
                     case "a": {
+                        RigidBody.velocity.x = 0;
+
+                        Animation.mode = STANDING;
                         break;
                     }
                     case "d": {
+                        RigidBody.velocity.x = 0;
+
+                        Animation.mode = STANDING;
                         break;
                     }
                     case "v": {

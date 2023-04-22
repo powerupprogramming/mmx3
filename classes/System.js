@@ -1,4 +1,4 @@
-import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, MOVEMENT, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
+import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
 
 class System {
@@ -12,88 +12,100 @@ class System {
 class MovementSystem extends System {
     constructor(systemType) {
         super(systemType);
-        this.componentRequirements = [MOVEMENT, POSITION];
+        this.componentRequirements = [RIGIDBODY, POSITION];
     }
 
-    update = (deltaTime) => {
+    update = (dt) => {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
             const { getComponent } = entity.registry;
 
             const Collision = getComponent(COLLISION, entity.id);
             const Position = getComponent(POSITION, entity.id);
-            const Movement = getComponent(MOVEMENT, entity.id);
+            const RigidBody = getComponent(RIGIDBODY, entity.id);
             const Animation = getComponent(ANIMATION, entity.id);
 
+            const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
+
+            // Gravity hack TODO: FIX
+            sumForces.y = mass * 9.8 * PIXELS_PER_METER;
+
+            // Integrate the forces 
+            acceleration.x = sumForces.x * (1 / mass);
+            acceleration.y = sumForces.y * (1 / mass);
+
+            // Integrate acceleration into velocity
+            velocity.x += acceleration.x * dt;
+            velocity.y += acceleration.y * dt;
 
             if (Collision) {
 
-                if (Movement.collisionX) {
-                    Movement.vX = 0;
-                    Movement.knockbackVx = 0;
+                if (Collision.collisionX) {
+                    velocity.x = 0;
+                    velocity.knockbackX = 0;
                     Position.x = Position.previousX;
                 } else {
                     Position.previousX = Position.x;
                 }
 
-                if (Movement.collisionY) {
-                    Movement.vY = 0;
-                    Movement.knockbackVy = 0;
+                if (Collision.collisionY) {
+                    velocity.y = 0;
+                    velocity.knockbackY = 0;
                     Position.y = Position.previousY;
                 } else {
                     Position.previousY = Position.y;
                 }
             }
-            Movement.collisionX = false;
-            Movement.collisionY = false;
+
+            Collision.collisionX = false;
+            Collision.collisionY = false;
 
             // Constant acceleration:
-
-            Position.x = Position.x + ((Movement.vX * deltaTime) + (Movement.knockbackVx * deltaTime)) + ((Movement.aX * deltaTime * deltaTime) / 2);
-            Position.y = Position.y + ((Movement.vY * deltaTime) + (Movement.knockbackVy * deltaTime)) + ((Movement.aX * deltaTime * deltaTime) / 2);
+            Position.x = Position.x + ((velocity.x * dt) + (velocity.knockbackX * dt)) + ((acceleration.x * dt * dt) / 2);
+            Position.y = Position.y + ((velocity.y * dt) + (velocity.knockbackY * dt)) + ((acceleration.y * dt * dt) / 2);
 
 
 
             const f = 0.95;     // friction coefficient
 
-            if (Movement.knockbackVx < 0) {
-                Movement.knockbackVx = f * Math.ceil(Movement.knockbackVx)
+            if (RigidBody.knockbackVx < 0) {
+                RigidBody.knockbackVx = f * Math.ceil(RigidBody.knockbackVx)
             }
-            else if (Movement.knockbackVx > 0) {
-                Movement.knockbackVx = f * Math.floor(Movement.knockbackVx)
-            }
-
-            if (Movement.knockbackVy < 0) {
-                Movement.knockbackVy = f * Math.ceil(Movement.knockbackVy);
-            }
-            else if (Movement.knockbackVy > 0) {
-                Movement.knockbackVy = f * Math.floor(Movement.knockbackVy);
+            else if (RigidBody.knockbackVx > 0) {
+                RigidBody.knockbackVx = f * Math.floor(RigidBody.knockbackVx)
             }
 
-
-
-            if (Animation) {
-                if (Movement.vX > 0) {
-                    Animation.facing = "right"
-                }
-                if (Movement.vX < 0) {
-                    Animation.facing = "left"
-                }
-
-                if (Movement.vY < 0) {
-                    Animation.facing = "up";
-                }
-
-                if (Movement.vY > 0) {
-                    Animation.facing = "down";
-                }
-                // TODO: put into user input
-                if (Movement.vX || Movement.vY) {
-                    Animation.shouldAnimate = true
-                } else {
-                    Animation.shouldAnimate = false
-                }
+            if (RigidBody.knockbackVy < 0) {
+                RigidBody.knockbackVy = f * Math.ceil(RigidBody.knockbackVy);
             }
+            else if (RigidBody.knockbackVy > 0) {
+                RigidBody.knockbackVy = f * Math.floor(RigidBody.knockbackVy);
+            }
+
+
+
+            // if (Animation) {
+            //     if (RigidBody.vX > 0) {
+            //         Animation.facing = "right"
+            //     }
+            //     if (RigidBody.vX < 0) {
+            //         Animation.facing = "left"
+            //     }
+
+            //     if (RigidBody.vY < 0) {
+            //         Animation.facing = "up";
+            //     }
+
+            //     if (RigidBody.vY > 0) {
+            //         Animation.facing = "down";
+            //     }
+            //     // TODO: put into user input
+            //     if (RigidBody.vX || RigidBody.vY) {
+            //         Animation.shouldAnimate = true
+            //     } else {
+            //         Animation.shouldAnimate = false
+            //     }
+            // }
         }
     }
 }
@@ -120,23 +132,38 @@ class CollisionSystem extends System {
 
                 const { x: px, y: py, width: pwidth, height: pheight } = getComponent(POSITION, player.id)
                 const { x: ex, y: ey, width: ewidth, height: eheight } = getComponent(POSITION, entity.id)
-                const Movement = getComponent(MOVEMENT, player.id)
+                const Movement = getComponent(RIGIDBODY, player.id)
+                const Collision = getComponent(COLLISION, player.id)
+
+                const { velocity } = Movement;
 
                 if (
                     px < ex + ewidth &&
-                    px + pwidth + (Movement.vX * deltaTime) + Movement.knockbackVx > ex &&
+                    px + pwidth + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
                     py < ey + eheight &&
-                    py + pheight + (Movement.vY * deltaTime) + Movement.knockbackVy > ey
+                    py + pheight + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
 
 
-                    if (Movement.vX !== 0 || Movement.knockbackVx) {
-                        Movement.collisionX = true
+
+                    // TODO: change collision component to hold which exact side there is collision on
+                    const side = DetermineDirectionOfContact(player, entity);
+
+                    console.log("side: ", side);
+                    if (side === "left" || side === "right") {
+                        Collision.collisionX = true;
+                    }
+                    else {
+                        Collision.collisionY = true;
                     }
 
-                    if (Movement.vY !== 0 || Movement.knockbackVy) {
-                        Movement.collisionY = true
-                    }
+                    // if (Movement.vX !== 0 || Movement.knockbackVx) {
+                    //     Collision.collisionX = true
+                    // }
+
+                    // if (Movement.vY !== 0 || Movement.knockbackVy) {
+                    //     Collision.collisionY = true
+                    // }
 
                 }
 
@@ -538,7 +565,7 @@ class RenderSystem extends System {
 
                 }
 
-                if (entity.registry.componentEntityMapping[HITBOX][entity.id]) {
+                if (entity.registry.getComponent(HITBOX, entity.id)) {
 
                     c.beginPath();
                     c.rect(x, y, width, height);
@@ -637,4 +664,51 @@ class AnimationSystem extends System {
     }
 }
 
+const DetermineDirectionOfContact = (receiver, sender) => {
+
+    const rPosition = receiver.registry.getComponent(POSITION, receiver.id);
+    const sPosition = receiver.registry.getComponent(POSITION, sender.id);
+
+
+    const receiverCenterX = rPosition.x - (rPosition.width / 2);
+    const receiverCenterY = rPosition.y - (rPosition.height / 2);
+
+    const senderCenterX = sPosition.x - (sPosition.width / 2);
+    const senderCenterY = sPosition.y - (sPosition.height / 2);
+
+    let differenceX = senderCenterX - receiverCenterX;
+    let differenceY = senderCenterY - receiverCenterY;
+
+    let absoluteDiffX = differenceX < 0 ? differenceX * -1 : differenceX;
+    let absoluteDiffY = differenceY < 0 ? differenceY * -1 : differenceY;
+
+    let side = undefined;
+
+    // Whatever is greater will determine the axis that collision occurred on.
+    if (absoluteDiffX > absoluteDiffY) {
+        // It is either left or right
+        const rRigidbody = receiver.registry.getComponent(RIGIDBODY, receiver.id);
+        if (differenceX < 0) {
+            side = "right"
+            // Apply knock back 
+        } else {
+            side = "left"
+        }
+    }
+    else {
+        // It is either top or bottom
+
+        if (differenceY < 0) {
+            side = "top";
+        } else {
+            side = "bottom";
+        }
+    }
+
+    return side;
+
+}
+
 export { MovementSystem, RenderSystem, ItemSystem, AnimationSystem, CollisionSystem, HealthSystem, TransitionSystem, ActionableSystem, HitboxSystem };
+
+

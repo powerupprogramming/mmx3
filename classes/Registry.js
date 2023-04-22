@@ -1,7 +1,7 @@
 import { Entity } from "./Entity.js";
-import { TransitionComponent, PositionComponent, SpriteComponent, MovementComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent } from "./Component.js";
+import { TransitionComponent, PositionComponent, SpriteComponent, RigidbodyComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent } from "./Component.js";
 import { AnimationSystem, ActionableSystem, CollisionSystem, MovementSystem, RenderSystem, TransitionSystem, HitboxSystem, HealthSystem, ItemSystem } from "./System.js"
-import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, MOVEMENT, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
+import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, RIGIDBODY, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HITBOX_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM, HEALTH_SYSTEM, ITEM_SYSTEM } from "../constants/SystemConstants.js";
 
 
@@ -150,13 +150,13 @@ class Registry {
                 this.componentEntityMapping[POSITION][this.numberOfEntities] = new PositionComponent(POSITION, componentObj);
                 break;
             }
-            case MOVEMENT: {
+            case RIGIDBODY: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[MOVEMENT]) {
-                    this.componentEntityMapping[MOVEMENT] = {};
+                if (!this.componentEntityMapping[RIGIDBODY]) {
+                    this.componentEntityMapping[RIGIDBODY] = {};
                 }
-                this.componentEntityMapping[MOVEMENT][this.numberOfEntities] = new MovementComponent(MOVEMENT, componentObj);
-                console.log("MOVEMENT COMPONENT:  ", this.componentEntityMapping[MOVEMENT][this.numberOfEntities])
+                this.componentEntityMapping[RIGIDBODY][this.numberOfEntities] = new RigidbodyComponent(RIGIDBODY, componentObj);
+                console.log("RIGIDBODY COMPONENT:  ", this.componentEntityMapping[RIGIDBODY][this.numberOfEntities])
                 break;
             }
             case SPRITE: {
@@ -274,7 +274,7 @@ class Registry {
             const componentRequirements = system["componentRequirements"];
 
             for (let i = 0; i < componentRequirements.length; i++) {
-                const req = componentRequirements[i];           // req is name of component like MOVEMENT or NODE
+                const req = componentRequirements[i];           // req is name of component like RIGIDBODY or NODE
                 const entityId = entity.id;
                 if (this.componentEntityMapping[req] === undefined || this.componentEntityMapping[req][entityId] === undefined) {
                     addToSystem = false;

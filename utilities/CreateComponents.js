@@ -1,4 +1,5 @@
-import { ANIMATION, COLLISION, MOVEMENT, POSITION, SPRITE } from "../constants/ComponentConstants.js";
+import { RIGHT } from "../constants/AnimationComponentConstants.js";
+import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE } from "../constants/ComponentConstants.js";
 
 // x: number, y : number, width: number: height: number
 // return dummyPosition
@@ -40,11 +41,11 @@ const CreateAnimationComponent = (path, srcRect) => {
     return d;
 };
 
-const CreateMovementComponent = (vX, vY, aX, aY) => {
+const CreateRigidbodyComponent = (vX, vY, aX, aY, sX, sY, mass) => {
     const d = {
-        name: MOVEMENT,
+        name: RIGIDBODY,
         value: {
-            vX, vY, aX, aY
+            vX, vY, aX, aY, sX, sY, mass
         }
     };
 
@@ -64,7 +65,7 @@ const CreateMegamanXAnimationComponent = () => {
         value: {
             path: "../assets/X-sprites.png",
             mode: "standing",
-            direction: "right",
+            direction: RIGHT,
             frames: {
                 standing: {
                     animationLength: 2000,
@@ -98,4 +99,4 @@ const CreateMegamanXAnimationComponent = () => {
 }
 
 
-export { CreatePositionComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateMovementComponent, CreateMegamanXAnimationComponent }
+export { CreatePositionComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent }

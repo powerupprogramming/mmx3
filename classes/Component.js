@@ -32,22 +32,20 @@ class PositionComponent extends Component {
 class CollisionComponent extends Component {
     constructor(componentType) {
         super(componentType);
+        this.collisionX = false;
+        this.collisionY = false;
     }
 }
 
-class MovementComponent extends Component {
+class RigidbodyComponent extends Component {
     constructor(componentType, componentObj) {      // Movement
         super(componentType);
-        console.log("component obj: ", componentObj.vX);
-        this.vX = componentObj.vX;
-        this.vY = componentObj.vY;
-        this.aX = componentObj.aX;
-        this.aY = componentObj.aY;
-        this.knockbackVx = 0;
-        this.knockbackVy = 0;
-        this.collisionX = false;
-        this.collisionY = false;
-        console.log(this.vX)
+        this.velocity = { x: componentObj.vX, y: componentObj.vY, knockbackX: 0, knockbackY: 0 }
+        this.acceleration = { x: componentObj.aX, y: componentObj.aY }
+        this.sumForces = { x: componentObj.sX, y: componentObj.sY }
+        this.mass = componentObj.mass;
+        this.maxV = 200;             // TODO: change 
+
     }
 }
 
@@ -111,7 +109,7 @@ class AnimationComponent extends Component {
         this.currentTimeOfAnimation = Date.now();   // keep
         this.mode = componentObj.mode;                     // keep - running, standing, attacking, run-attack, jumping
         this.direction = componentObj.direction;    // keep
-        this.facing = componentObj.facing;          // string
+        this.facing = componentObj.facing;          // keep string
         this.removeOn = componentObj.removeOn;
         this.shouldAnimate = componentObj.shouldAnimate;
         this.isAttackingA = false;
@@ -177,4 +175,4 @@ class ItemComponent extends Component {
 
 
 
-export { MovementComponent, HitboxComponent, ItemComponent, PositionComponent, ItemDropComponent, SpriteComponent, AnimationComponent, CollisionComponent, TransitionComponent, ActionableComponent, InventoryComponent, HealthComponent }
+export { RigidbodyComponent, HitboxComponent, ItemComponent, PositionComponent, ItemDropComponent, SpriteComponent, AnimationComponent, CollisionComponent, TransitionComponent, ActionableComponent, InventoryComponent, HealthComponent }
