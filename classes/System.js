@@ -1,5 +1,5 @@
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, MOVEMENT, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
-import { canvas, c } from "../index.js";
+import { canvas, c, MILLISECONDS_PER_FRAME } from "../index.js";
 
 class System {
     constructor(systemType) {
@@ -408,7 +408,6 @@ class HitboxSystem extends System {
                             }
                         }
 
-                        console.log("side: ", side)
 
                     }
 
@@ -496,6 +495,8 @@ class RenderSystem extends System {
             c.beginPath();
             if (srcRect) {
                 c.globalCompositeOperation = "source-over"
+                // c.imageSmoothingEnabled = true;
+                // c.imageSmoothingQuality = "high";
                 const { x: sx, y: sy, width: sw, height: sh } = srcRect;
 
                 c.drawImage(sprite, sx, sy, sw, sh, x, y, width, height);
@@ -552,52 +553,74 @@ class AnimationSystem extends System {
         this.componentRequirements = [POSITION, SPRITE, ANIMATION]
     }
 
-    update = (gameTime) => {
+    update = () => {
 
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
 
-            const { facing, shouldAnimate, isAttackingA, isStatic, removeOn, isAttackingB } = entity.components["Animation"];
-
-            if (isStatic) {
-                const currentFrame = Math.floor(
-                    (gameTime - entity.components["Animation"]["currentTimeOfAnimation"]) *
-                    entity.components["Animation"]["frames"]["frameSpeedRate"] / 1000
-                ) % entity.components["Animation"]["frames"]["numFrames"];
 
 
-                entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"]["srcRect"][currentFrame];
+            const Animation = entity.registry.componentEntityMapping[ANIMATION][entity.id];
+            const { mode, direction } = Animation;
+            const { animationLength } = Animation.frames[mode];
 
-                entity.components["Animation"]["frames"]["currentFrame"] = currentFrame;
-            }
-            else if (shouldAnimate || isAttackingA || isAttackingB) {
+            const numOfFrames = Animation.frames[mode][direction].srcRect.length;
 
-                let mode;
-                if (!shouldAnimate && (isAttackingA || isAttackingB)) {
-                    mode = "attack";
-                } else {
-                    mode = "move"
-                }
-
-                const currentFrame = Math.floor(
-                    (gameTime - entity.components["Animation"]["currentTimeOfAnimation"]) *
-                    entity.components["Animation"]["frames"][facing][mode]["frameSpeedRate"] / 1000
-                ) % entity.components["Animation"]["frames"][facing][mode]["numFrames"];
+            const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
 
 
-                entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"][facing][mode]["srcRect"][currentFrame];
+            const Sprite = entity.registry.componentEntityMapping[SPRITE][entity.id];
 
-                entity.components["Animation"]["frames"][facing][mode]["currentFrame"] = currentFrame;
-            }
-            else if (!shouldAnimate && !isAttackingA && !isAttackingB) {
-                entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"][facing]["move"]["srcRect"][0];
-                entity.components["Animation"]["frames"][facing]["move"]["currentFrame"] = 0;
-            }
+            Sprite.srcRect = Animation.frames[mode][direction]["srcRect"][nextFrame];
+            Animation.currentTimeOfAnimation = Date.now();
+            Animation.currentFrame = nextFrame;
 
-            if (removeOn && removeOn === entity.components["Animation"]["frames"]["currentFrame"]) {
-                entity.registry.entitiesToBeRemoved.push(entity);
 
-            }
+
+
+
+
+            // const { facing, shouldAnimate, isAttackingA, isStatic, removeOn, isAttackingB } = entity.components["Animation"];
+
+            // if (isStatic) {
+            //     const currentFrame = Math.floor(
+            //         (gameTime - entity.components["Animation"]["currentTimeOfAnimation"]) *
+            //         entity.components["Animation"]["frames"]["frameSpeedRate"] / 1000
+            //     ) % entity.components["Animation"]["frames"]["numFrames"];
+
+
+            //     entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"]["srcRect"][currentFrame];
+
+            //     entity.components["Animation"]["frames"]["currentFrame"] = currentFrame;
+            // }
+            // else if (shouldAnimate || isAttackingA || isAttackingB) {
+
+            //     let mode;
+            //     if (!shouldAnimate && (isAttackingA || isAttackingB)) {
+            //         mode = "attack";
+            //     } else {
+            //         mode = "move"
+            //     }
+
+            //     const currentFrame = Math.floor(
+            //         (gameTime - entity.components["Animation"]["currentTimeOfAnimation"]) *
+            //         entity.components["Animation"]["frames"][facing][mode]["frameSpeedRate"] / 1000
+            //     ) % entity.components["Animation"]["frames"][facing][mode]["numFrames"];
+
+
+            //     entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"][facing][mode]["srcRect"][currentFrame];
+
+            //     entity.components["Animation"]["frames"][facing][mode]["currentFrame"] = currentFrame;
+            // }
+            // else if (!shouldAnimate && !isAttackingA && !isAttackingB) {
+            //     entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"][facing]["move"]["srcRect"][0];
+            //     entity.components["Animation"]["frames"][facing]["move"]["currentFrame"] = 0;
+            // }
+
+            // if (removeOn && removeOn === entity.components["Animation"]["frames"]["currentFrame"]) {
+            //     entity.registry.entitiesToBeRemoved.push(entity);
+
+            // }
 
         }
     }

@@ -1,6 +1,6 @@
 import Registry from "./classes/Registry.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
+import { CreateMegamanXAnimationComponent, CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
 
 export const canvas = document.getElementById("gameScreen");
 canvas.width = window.innerWidth;
@@ -8,6 +8,10 @@ canvas.height = window.innerHeight;
 
 export const c = canvas.getContext("2d");
 export const TILE_SIZE = 70
+
+
+const FPS = 60;
+export const MILLISECONDS_PER_FRAME = 1000 / FPS           // for 60 frame a second, its 16.666 MILLISECONDS per frame
 
 
 
@@ -25,6 +29,8 @@ class Game {
         // this.inventoryScreen = new InventoryScreen();
         this.audioPath = "";
         this.isPaused = false;
+        this.deltaTime = undefined;
+        this.millisecondsPreviousFrame = 0;
     }
 
     initialize = () => {
@@ -45,17 +51,38 @@ class Game {
 
 
         const p = CreatePositionComponent(50, 50, 50, 50);
-        const s = CreateSpriteComponent("./assets/X-sprites.png", p.value);
+        const s = CreateSpriteComponent("./assets/X-sprites.png", { x: 0, y: 60, width: 50, height: 50 });
+        const a = CreateMegamanXAnimationComponent();
 
-        const Entity = this.registry.createEntity([p, s]);
+        const Entity = this.registry.createEntity([p, s, a]);
 
 
-        console.log(this.registry.componentEntityMapping)
+    }
+
+
+    run = () => {
+        let timeToWait = MILLISECONDS_PER_FRAME - (Date.now() - this.millisecondsPreviousFrame);
+        if (timeToWait > 0 && timeToWait <= MILLISECONDS_PER_FRAME) {
+            // TODO: Throttle game
+            setTimeout(() => {
+                // console.log("Timeout: ", timeToWait)
+                this.update();
+                this.render();
+            }, timeToWait)
+        } else {
+            // console.log("NOT: ", timeToWait)
+            this.deltaTime = (Date.now() - this.millisecondsPreviousFrame) / 1000
+            this.millisecondsPreviousFrame = Date.now();
+            this.update();
+            this.render();
+        }
+
+
+        requestAnimationFrame(this.run)
     }
 
     update = () => {
 
-        this.gameTime = Date.now();
 
         if (!this.isPaused) {
 
@@ -73,12 +100,13 @@ class Game {
 
             }
 
+
             this.registry.update();
 
 
-            this.registry.getSystem(ANIMATION_SYSTEM).update(this.gameTime);
+            this.registry.getSystem(ANIMATION_SYSTEM).update();
             this.registry.getSystem(COLLISION_SYSTEM).update(this.player)
-            this.registry.getSystem(MOVEMENT_SYSTEM).update()
+            this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime)
             this.registry.getSystem(HITBOX_SYSTEM).update();
             this.registry.getSystem(HEALTH_SYSTEM).update(this.registry);
             this.registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
@@ -97,7 +125,6 @@ class Game {
         }
 
 
-        requestAnimationFrame(this.update)
     }
 
 
@@ -106,7 +133,6 @@ class Game {
         if (!this.isPaused) {
             this.registry.getSystem(RENDER_SYSTEM).update(this.isDebug, this.eventBus);
         }
-        requestAnimationFrame(this.render);
     }
 
 
@@ -198,6 +224,6 @@ class Game {
 
 const game = new Game();
 game.initialize();
-game.update();
-game.render();
+game.run();
+
 

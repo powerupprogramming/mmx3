@@ -86,37 +86,29 @@ class SpriteComponent extends Component {
 class AnimationComponent extends Component {
     constructor(componentType, componentObj) {
         super(componentType);
-        this.isStatic = componentObj.isStatic;
-        this.frames = componentObj.frames;
+        this.isStatic = componentObj.isStatic;          // keep
+        this.frames = componentObj.frames;              // keep
         /*
             {
-                down: {
-                    move: {
+                running: {
+                    right: {
                         srcRect: [
                             {x,y,width,height},
                             {x,y,width,height}
                         ],
-                        currentFrame: 0,
-                        numFrames: 2,
-                        frameSpeedRate: 3,
-                        startTime: Date.now() 
                     },
-                    attack: {
-                        srcRect: {x,y,width,height}
-                        currentFrame: 0
-                        numFrames: 2,
-                        frameSpeedRate: 3,
-                        startTime: Date.now()
-                    }
+                    left: {...}
                 },
-                up: {},
-                left: {},
-                right: {}
+                attack: {}
             }
         */
-        this.removeOn = componentObj.removeOn;
-        this.currentTimeOfAnimation = componentObj.currentTimeOfAnimation;
+        this.currentFrame = 0;                      // keep
+        this.startOfAnimation = Date.now();         // keep
+        this.currentTimeOfAnimation = Date.now();   // keep
+        this.mode = componentObj.mode;                     // keep - running, standing, attacking, run-attack, jumping
+        this.direction = componentObj.direction;    // keep
         this.facing = componentObj.facing;          // string
+        this.removeOn = componentObj.removeOn;
         this.shouldAnimate = componentObj.shouldAnimate;
         this.isAttackingA = false;
         this.isAttackingB = false;

@@ -138,8 +138,7 @@ class Registry {
 
 
     addComponentToEntity = (component) => {
-        console.log("TEST ", this.componentEntityMapping[POSITION])
-        console.log("TEST ", component["name"])
+
 
         switch (component["name"]) {
             case POSITION: {
@@ -260,7 +259,7 @@ class Registry {
 
         }
 
-        console.log("This componentEntityMapping was updated for component: ", component["name"], " and id: ", this.numberOfEntities, " here is final result: ", this.componentEntityMapping)
+        // console.log("This componentEntityMapping was updated for component: ", component["name"], " and id: ", this.numberOfEntities, " here is final result: ", this.componentEntityMapping)
 
     }
 
@@ -276,9 +275,6 @@ class Registry {
             for (let i = 0; i < componentRequirements.length; i++) {
                 const req = componentRequirements[i];           // req is name of component like MOVEMENT or NODE
                 const entityId = entity.id;
-                console.log("SYSTEM: ", system)
-                console.log("adf; ", req)
-                console.log("ddd; ", this.componentEntityMapping[req])
                 if (this.componentEntityMapping[req] === undefined || this.componentEntityMapping[req][entityId] === undefined) {
                     addToSystem = false;
                     break;
