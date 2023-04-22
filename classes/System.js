@@ -1,5 +1,5 @@
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, MOVEMENT, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
-import { canvas, c, MILLISECONDS_PER_FRAME } from "../index.js";
+import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
 
 class System {
     constructor(systemType) {
@@ -15,14 +15,18 @@ class MovementSystem extends System {
         this.componentRequirements = [MOVEMENT, POSITION];
     }
 
-    update = () => {
+    update = (deltaTime) => {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
+            const { getComponent } = entity.registry;
 
-            let { Movement, Position, Animation, Collision } = entity.components;
+            const Collision = getComponent(COLLISION, entity.id);
+            const Position = getComponent(POSITION, entity.id);
+            const Movement = getComponent(MOVEMENT, entity.id);
+            const Animation = getComponent(ANIMATION, entity.id);
+
 
             if (Collision) {
-                const { facing } = Animation;
 
                 if (Movement.collisionX) {
                     Movement.vX = 0;
@@ -43,8 +47,12 @@ class MovementSystem extends System {
             Movement.collisionX = false;
             Movement.collisionY = false;
 
-            Position.x += Movement.vX + Movement.knockbackVx;
-            Position.y += Movement.vY + Movement.knockbackVy;
+            // Constant acceleration:
+
+            Position.x = Position.x + ((Movement.vX * deltaTime) + (Movement.knockbackVx * deltaTime)) + ((Movement.aX * deltaTime * deltaTime) / 2);
+            Position.y = Position.y + ((Movement.vY * deltaTime) + (Movement.knockbackVy * deltaTime)) + ((Movement.aX * deltaTime * deltaTime) / 2);
+
+
 
             const f = 0.95;     // friction coefficient
 
@@ -79,7 +87,7 @@ class MovementSystem extends System {
                 if (Movement.vY > 0) {
                     Animation.facing = "down";
                 }
-
+                // TODO: put into user input
                 if (Movement.vX || Movement.vY) {
                     Animation.shouldAnimate = true
                 } else {
@@ -97,25 +105,28 @@ class CollisionSystem extends System {
         this.componentRequirements = [POSITION, COLLISION]
     }
 
-    update = (player) => {
+    update = (player, deltaTime) => {
 
         if (player) {
             for (let i = 0; i < this.entities.length; i++) {
 
                 const entity = this.entities[i];
+                const { getComponent } = entity.registry;
+
+
 
                 if (player.id === entity.id) continue;
 
 
-                const { x: px, y: py, width: pwidth, height: pheight } = player.components["Position"];
-                const { x: ex, y: ey, width: ewidth, height: eheight } = entity.components["Position"];
-                const { Movement } = player.components;
+                const { x: px, y: py, width: pwidth, height: pheight } = getComponent(POSITION, player.id)
+                const { x: ex, y: ey, width: ewidth, height: eheight } = getComponent(POSITION, entity.id)
+                const Movement = getComponent(MOVEMENT, player.id)
 
                 if (
                     px < ex + ewidth &&
-                    px + pwidth + Movement.vX + Movement.knockbackVx > ex &&
+                    px + pwidth + (Movement.vX * deltaTime) + Movement.knockbackVx > ex &&
                     py < ey + eheight &&
-                    py + pheight + Movement.vY + Movement.knockbackVy > ey
+                    py + pheight + (Movement.vY * deltaTime) + Movement.knockbackVy > ey
                 ) {
 
 

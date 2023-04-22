@@ -1,4 +1,4 @@
-import { ANIMATION, POSITION, SPRITE } from "../constants/ComponentConstants.js";
+import { ANIMATION, COLLISION, MOVEMENT, POSITION, SPRITE } from "../constants/ComponentConstants.js";
 
 // x: number, y : number, width: number: height: number
 // return dummyPosition
@@ -40,6 +40,24 @@ const CreateAnimationComponent = (path, srcRect) => {
     return d;
 };
 
+const CreateMovementComponent = (vX, vY, aX, aY) => {
+    const d = {
+        name: MOVEMENT,
+        value: {
+            vX, vY, aX, aY
+        }
+    };
+
+    return d;
+}
+
+const CreateCollisionComponent = () => {
+    const d = {
+        name: COLLISION
+    };
+    return d;
+}
+
 const CreateMegamanXAnimationComponent = () => {
     const d = {
         name: ANIMATION,
@@ -80,4 +98,4 @@ const CreateMegamanXAnimationComponent = () => {
 }
 
 
-export { CreatePositionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateMegamanXAnimationComponent }
+export { CreatePositionComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateMovementComponent, CreateMegamanXAnimationComponent }

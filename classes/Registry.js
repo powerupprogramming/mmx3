@@ -156,6 +156,7 @@ class Registry {
                     this.componentEntityMapping[MOVEMENT] = {};
                 }
                 this.componentEntityMapping[MOVEMENT][this.numberOfEntities] = new MovementComponent(MOVEMENT, componentObj);
+                console.log("MOVEMENT COMPONENT:  ", this.componentEntityMapping[MOVEMENT][this.numberOfEntities])
                 break;
             }
             case SPRITE: {
@@ -292,6 +293,17 @@ class Registry {
     // systemType: string
     getSystem = (systemType) => {
         return this.systems[systemType];
+    }
+
+    getComponent = (componentType, entityId) => {
+
+
+        if (this.componentEntityMapping[componentType]) {
+            return this.componentEntityMapping[componentType][entityId];
+        } else {
+
+            return undefined;
+        }
     }
 
 

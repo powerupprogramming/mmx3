@@ -1,6 +1,6 @@
 import Registry from "./classes/Registry.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { CreateMegamanXAnimationComponent, CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
+import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateMovementComponent, CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
 
 export const canvas = document.getElementById("gameScreen");
 canvas.width = window.innerWidth;
@@ -12,7 +12,7 @@ export const TILE_SIZE = 70
 
 const FPS = 60;
 export const MILLISECONDS_PER_FRAME = 1000 / FPS           // for 60 frame a second, its 16.666 MILLISECONDS per frame
-
+export const PIXELS_PER_METER = 50;
 
 
 class Game {
@@ -29,7 +29,7 @@ class Game {
         // this.inventoryScreen = new InventoryScreen();
         this.audioPath = "";
         this.isPaused = false;
-        this.deltaTime = undefined;
+        this.deltaTime = 0;
         this.millisecondsPreviousFrame = 0;
     }
 
@@ -53,9 +53,15 @@ class Game {
         const p = CreatePositionComponent(50, 50, 50, 50);
         const s = CreateSpriteComponent("./assets/X-sprites.png", { x: 0, y: 60, width: 50, height: 50 });
         const a = CreateMegamanXAnimationComponent();
+        const m = CreateMovementComponent(0, 0, 0, 0);
+        const c = CreateCollisionComponent();
 
-        const Entity = this.registry.createEntity([p, s, a]);
+        this.player = this.registry.createEntity([p, s, a, m, c]);
 
+        const newP = CreatePositionComponent(150, 50, 50, 50);
+        const block = this.registry.createEntity([newP, s, c]);
+
+        console.log(this.registry.componentEntityMapping)
 
     }
 
@@ -65,13 +71,20 @@ class Game {
         if (timeToWait > 0 && timeToWait <= MILLISECONDS_PER_FRAME) {
             // TODO: Throttle game
             setTimeout(() => {
-                // console.log("Timeout: ", timeToWait)
+                this.deltaTime = (Date.now() - this.millisecondsPreviousFrame) / 1000
+                if (this.deltaTime > 0.033) {
+                    this.deltaTime = 0.033
+                }
+                this.millisecondsPreviousFrame = Date.now();
                 this.update();
                 this.render();
             }, timeToWait)
         } else {
             // console.log("NOT: ", timeToWait)
             this.deltaTime = (Date.now() - this.millisecondsPreviousFrame) / 1000
+            if (this.deltaTime > 0.033) {
+                this.deltaTime = 0.033
+            }
             this.millisecondsPreviousFrame = Date.now();
             this.update();
             this.render();
@@ -105,7 +118,7 @@ class Game {
 
 
             this.registry.getSystem(ANIMATION_SYSTEM).update();
-            this.registry.getSystem(COLLISION_SYSTEM).update(this.player)
+            this.registry.getSystem(COLLISION_SYSTEM).update(this.player, this.deltaTime)
             this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime)
             this.registry.getSystem(HITBOX_SYSTEM).update();
             this.registry.getSystem(HEALTH_SYSTEM).update(this.registry);

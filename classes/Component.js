@@ -38,12 +38,16 @@ class CollisionComponent extends Component {
 class MovementComponent extends Component {
     constructor(componentType, componentObj) {      // Movement
         super(componentType);
+        console.log("component obj: ", componentObj.vX);
         this.vX = componentObj.vX;
         this.vY = componentObj.vY;
+        this.aX = componentObj.aX;
+        this.aY = componentObj.aY;
         this.knockbackVx = 0;
         this.knockbackVy = 0;
         this.collisionX = false;
         this.collisionY = false;
+        console.log(this.vX)
     }
 }
 
