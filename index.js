@@ -80,7 +80,6 @@ class Game {
     run = () => {
         let timeToWait = MILLISECONDS_PER_FRAME - (Date.now() - this.millisecondsPreviousFrame);
         if (timeToWait > 0 && timeToWait <= MILLISECONDS_PER_FRAME) {
-            // TODO: Throttle game
             setTimeout(() => {
                 this.deltaTime = (Date.now() - this.millisecondsPreviousFrame) / 1000
                 if (this.deltaTime > 0.033) {
@@ -91,7 +90,6 @@ class Game {
                 this.render();
             }, timeToWait)
         } else {
-            // console.log("NOT: ", timeToWait)
             this.deltaTime = (Date.now() - this.millisecondsPreviousFrame) / 1000
             if (this.deltaTime > 0.033) {
                 this.deltaTime = 0.033

@@ -32,8 +32,10 @@ class PositionComponent extends Component {
 class CollisionComponent extends Component {
     constructor(componentType) {
         super(componentType);
-        this.collisionX = false;
-        this.collisionY = false;
+        this.collisionBottom = false;
+        this.collisionTop = false;
+        this.collisionLeft = false;
+        this.collisionRight = false;
     }
 }
 

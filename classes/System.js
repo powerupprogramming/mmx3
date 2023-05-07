@@ -27,7 +27,6 @@ class MovementSystem extends System {
 
             const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
 
-            // Gravity hack TODO: FIX
             sumForces.y = mass * 9.8 * PIXELS_PER_METER;
 
             // Integrate the forces 
@@ -40,7 +39,7 @@ class MovementSystem extends System {
 
             if (Collision) {
 
-                if (Collision.collisionX) {
+                if (Collision.collisionLeft || Collision.collisionRight) {
                     velocity.x = 0;
                     velocity.knockbackX = 0;
                     Position.x = Position.previousX;
@@ -48,7 +47,7 @@ class MovementSystem extends System {
                     Position.previousX = Position.x;
                 }
 
-                if (Collision.collisionY) {
+                if (Collision.collisionTop || Collision.collisionBottom) {
                     velocity.y = 0;
                     velocity.knockbackY = 0;
                     Position.y = Position.previousY;
@@ -57,8 +56,10 @@ class MovementSystem extends System {
                 }
             }
 
-            Collision.collisionX = false;
-            Collision.collisionY = false;
+            Collision.collisionBottom = false;
+            Collision.collisionTop = false;
+            Collision.collisionLeft = false;
+            Collision.collisionRight = false;
 
             // Constant acceleration:
             Position.x = Position.x + ((velocity.x * dt) + (velocity.knockbackX * dt)) + ((acceleration.x * dt * dt) / 2);
@@ -150,27 +151,7 @@ class CollisionSystem extends System {
                     playerBottomPoint.y < ey + eheight &&
                     playerBottomPoint.y + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
-
-
-
-                    // TODO: change collision component to hold which exact side there is collision on
-
-                    // console.log("side: ", side);
-                    // if (side === "left" || side === "right") {
-                    //     Collision.collisionX = true;
-                    // }
-                    // else {
-                    Collision.collisionY = true;
-                    // }
-
-                    // if (Movement.vX !== 0 || Movement.knockbackVx) {
-                    //     Collision.collisionX = true
-                    // }
-
-                    // if (Movement.vY !== 0 || Movement.knockbackVy) {
-                    //     Collision.collisionY = true
-                    // }
-
+                    Collision.collisionBottom = true;
                 }
 
                 if (
@@ -179,27 +160,7 @@ class CollisionSystem extends System {
                     playerTopPoint.y < ey + eheight &&
                     playerTopPoint.y + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
-
-
-
-                    // TODO: change collision component to hold which exact side there is collision on
-
-                    // console.log("side: ", side);
-                    // if (side === "left" || side === "right") {
-                    //     Collision.collisionX = true;
-                    // }
-                    // else {
-                    Collision.collisionY = true;
-                    // }
-
-                    // if (Movement.vX !== 0 || Movement.knockbackVx) {
-                    //     Collision.collisionX = true
-                    // }
-
-                    // if (Movement.vY !== 0 || Movement.knockbackVy) {
-                    //     Collision.collisionY = true
-                    // }
-
+                    Collision.collisionTop = true;
                 }
 
                 if (
@@ -208,13 +169,7 @@ class CollisionSystem extends System {
                     playerRightPoint.y < ey + eheight &&
                     playerRightPoint.y + 1 + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
-
-
-
-                    // TODO: change collision component to hold which exact side there is collision on
-                    Collision.collisionX = true;
-
-
+                    Collision.collisionRight = true;
                 }
                 if (
                     playerLeftPoint.x < ex + ewidth &&
@@ -222,36 +177,9 @@ class CollisionSystem extends System {
                     playerLeftPoint.y < ey + eheight &&
                     playerLeftPoint.y + 1 + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
-
-
-
-                    // TODO: change collision component to hold which exact side there is collision on
-                    Collision.collisionX = true;
-
-
+                    Collision.collisionLeft = true;
                 }
 
-                // if (
-                //     px < ex + ewidth &&
-                //     px + pwidth + (velocity.x * deltaTime) + velocity.knockbackX > ex &&
-                //     py < ey + eheight &&
-                //     py + pheight + (velocity.y * deltaTime) + velocity.knockbackY > ey
-                // ) {
-
-
-
-                //     // TODO: change collision component to hold which exact side there is collision on
-                //     const side = DetermineDirectionOfContact(player, entity);
-
-                //     console.log("side: ", side);
-                //     if (side === "left" || side === "right") {
-                //         Collision.collisionX = true;
-                //     }
-                //     else {
-                //         Collision.collisionY = true;
-                //     }
-
-                // }
 
 
             }
