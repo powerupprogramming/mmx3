@@ -112,10 +112,10 @@ class AnimationComponent extends Component {
         this.mode = componentObj.mode;                     // keep - running, standing, attacking, run-attack, jumping
         this.direction = componentObj.direction;    // keep
         this.facing = componentObj.facing;          // keep string
-        this.removeOn = componentObj.removeOn;
-        this.shouldAnimate = componentObj.shouldAnimate;
-        this.isAttackingA = false;
-        this.isAttackingB = false;
+        // this.removeOn = componentObj.removeOn;
+        // this.shouldAnimate = componentObj.shouldAnimate;
+        // this.isAttackingA = false;
+        // this.isAttackingB = false;
     }
 }
 

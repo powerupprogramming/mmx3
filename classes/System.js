@@ -542,10 +542,10 @@ class RenderSystem extends System {
             const { x, y, width, height } = Position;
             const { srcRect, sprite } = Sprite;
 
-
-
             c.beginPath();
+
             if (srcRect) {
+
                 c.globalCompositeOperation = "source-over"
                 // c.imageSmoothingEnabled = true;
                 // c.imageSmoothingQuality = "high";
@@ -554,8 +554,10 @@ class RenderSystem extends System {
                 c.drawImage(sprite, sx, sy, sw, sh, x, y, width, height);
             }
             else {
+
                 c.globalCompositeOperation = "destination-over"
                 c.drawImage(sprite, x, y, width, height)
+
             }
 
             if (isDebug) {
@@ -616,14 +618,19 @@ class AnimationSystem extends System {
             const { mode, direction } = Animation;
             const { animationLength } = Animation.frames[mode];
 
-            const numOfFrames = Animation.frames[mode][direction].srcRect.length;
+            const numOfFrames = Animation.frames[mode][direction];
 
             const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
 
 
+
             const Sprite = entity.registry.componentEntityMapping[SPRITE][entity.id];
 
-            Sprite.srcRect = Animation.frames[mode][direction]["srcRect"][nextFrame];
+            if (nextFrame !== Animation.currentFrame || Sprite.sprite.src.search("undefined") !== false) {
+                Sprite.sprite.src = `../assets/MegamanX/${mode}/${nextFrame}.png`.toLowerCase()
+            }
+
+
             Animation.currentTimeOfAnimation = Date.now();
             Animation.currentFrame = nextFrame;
 

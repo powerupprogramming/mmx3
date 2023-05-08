@@ -52,25 +52,30 @@ class Game {
         document.addEventListener("keydown", this.handleUserInput)
 
 
-        const p = CreatePositionComponent(250, 50, 50, 50);
+        const p = CreatePositionComponent(250, 50, 120, 90);
         const s = CreateSpriteComponent("./assets/X-sprites.png", { x: 0, y: 60, width: 50, height: 50 });
         const a = CreateMegamanXAnimationComponent();
         const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
         const c = CreateCollisionComponent();
 
-        this.player = this.registry.createEntity([p, s, a, m, c]);
+        const playerS = CreateSpriteComponent();
 
-        for (let i = 0; i < 5; i++) {
+
+
+        this.player = this.registry.createEntity([p, playerS, a, m, c]);
+
+
+        for (let i = 0; i < 10; i++) {
             const xVal = i * 50 + 200;
             const newP = CreatePositionComponent(xVal, 400, 50, 50);
             this.registry.createEntity([newP, s, c]);
         }
 
-        const p2 = CreatePositionComponent(400, 100, 50, 50);
+        const p2 = CreatePositionComponent(400, 350, 50, 50);
         this.registry.createEntity([p2, s, c]);
 
-        const p3 = CreatePositionComponent(250, 100, 50, 50);
-        this.registry.createEntity([p3, s, c]);
+        // const p3 = CreatePositionComponent(250, 100, 50, 50);
+        // this.registry.createEntity([p3, s, c]);
 
 
 
@@ -181,7 +186,7 @@ class Game {
                         break;
                     }
                     case "a": {
-                        RigidBody.velocity.x = -400;
+                        RigidBody.velocity.x = -5;
                         Animation.mode = RUNNING;
                         break;
                     }
@@ -191,7 +196,7 @@ class Game {
                         break;
                     }
                     case "d": {
-                        RigidBody.velocity.x = 400;
+                        RigidBody.velocity.x = 5;
                         Animation.mode = RUNNING;
                         break
 
