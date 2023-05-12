@@ -626,7 +626,7 @@ class AnimationSystem extends System {
 
             const Sprite = entity.registry.componentEntityMapping[SPRITE][entity.id];
 
-            if (nextFrame !== Animation.currentFrame || Sprite.sprite.src.search("undefined") !== false) {
+            if (nextFrame !== Animation.currentFrame) {
                 Sprite.sprite.src = `../assets/MegamanX/${mode}/${nextFrame}.png`.toLowerCase()
             }
 

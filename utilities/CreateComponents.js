@@ -11,10 +11,7 @@ const CreatePositionComponent = (x, y, width, height) => {
             x, y, width, height
         }
     }
-
-
     return d;
-
 }
 
 
@@ -64,6 +61,7 @@ const CreateMegamanXAnimationComponent = () => {
         name: ANIMATION,
         value: {
             // path: "../assets/X-sprites.png",
+            src: undefined,
             mode: "standing",
             direction: RIGHT,
             frames: {

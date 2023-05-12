@@ -85,6 +85,18 @@ class Registry {
 
         this.entitiesToBeAdded.push(newEntity);
         this.numberOfEntities++;
+
+
+        const spriteComponent = this.getComponent(SPRITE, newEntity.id)
+
+        if (spriteComponent.sprite.src.includes("undefined") == true) {
+            const animationComponent = this.getComponent(ANIMATION, newEntity.id);
+            if (animationComponent) {
+                const mode = animationComponent.mode
+                spriteComponent.sprite.src = `../assets/MegamanX/${mode}/0.png`.toLowerCase()
+            }
+        }
+
         return newEntity;
     }
 
@@ -156,7 +168,6 @@ class Registry {
                     this.componentEntityMapping[RIGIDBODY] = {};
                 }
                 this.componentEntityMapping[RIGIDBODY][this.numberOfEntities] = new RigidbodyComponent(RIGIDBODY, componentObj);
-                console.log("RIGIDBODY COMPONENT:  ", this.componentEntityMapping[RIGIDBODY][this.numberOfEntities])
                 break;
             }
             case SPRITE: {
@@ -165,6 +176,9 @@ class Registry {
                     this.componentEntityMapping[SPRITE] = {};
                 }
                 this.componentEntityMapping[SPRITE][this.numberOfEntities] = new SpriteComponent(SPRITE, componentObj);
+
+
+
                 break;
             }
             case ANIMATION: {
