@@ -1,5 +1,5 @@
 import Registry from "./classes/Registry.js";
-import { CHANGESTATE, JUMPING, RUNNING, STANDING } from "./constants/AnimationComponentConstants.js";
+import { CHANGESTATE, JUMPING, LEFT, RIGHT, RUNNING, STANDING } from "./constants/AnimationComponentConstants.js";
 import { ANIMATION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
 import { GROUNDCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
@@ -210,6 +210,7 @@ class Game {
             const { id } = this.player;
             const RigidBody = Registry.getComponent(RIGIDBODY, id);
             const State = Registry.getComponent(STATE, id);
+            const Animation = Registry.getComponent(ANIMATION, id);
             if (type === "keydown") {
 
                 switch (key) {
@@ -220,6 +221,8 @@ class Game {
                     case "a": {
                         RigidBody.velocity.x = -50;
                         this.eventBus[id][CHANGESTATE](new RunningState(0), id)
+
+                        Animation.direction = LEFT
                         // State.mainStates.running = 0;
                         // State.mainStates.standing = null;
                         break;
@@ -231,6 +234,7 @@ class Game {
                     }
                     case "d": {
                         RigidBody.velocity.x = 50;
+                        Animation.direction = RIGHT
                         this.eventBus[id][CHANGESTATE](new RunningState(0), id)
                         // State.currentState = { RUNNING: 0 };
                         // State.currentState.running = 0;
@@ -247,7 +251,7 @@ class Game {
                     }
                     case "c": {
 
-                        if (State.currentState.name !== JUMPING) {
+                        if (State.currentState && State.currentState.name !== JUMPING) {
                             // jump
                             RigidBody.velocity.y = -300;
                             this.eventBus[id][CHANGESTATE](new JumpingState(), id)

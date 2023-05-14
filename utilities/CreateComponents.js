@@ -67,16 +67,19 @@ const CreateMegamanXAnimationComponent = () => {
             frames: {
                 standing: {
                     animationLength: 2000,
-                    right: 3
+                    right: 3,
+                    left: 3
                 },
                 running: {
                     animationLength: 100,
-                    right: 10
+                    right: 10,
+                    left: 10
                 },
                 jumping: {
                     animationLength: 100,
                     hold: 5,
-                    right: 6
+                    right: 6,
+                    left: 6
                 }
             }
         }

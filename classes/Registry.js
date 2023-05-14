@@ -94,8 +94,8 @@ class Registry {
         if (spriteComponent.sprite.src.includes("undefined") == true) {
             const animationComponent = Registry.getComponent(ANIMATION, newEntity.id);
             if (animationComponent) {
-                const mode = animationComponent.mode
-                spriteComponent.sprite.src = `../assets/MegamanX/${mode}/0.png`.toLowerCase()
+                const { mode, direction } = animationComponent;
+                spriteComponent.sprite.src = `../assets/MegamanX/${mode}/${direction}/0.png`.toLowerCase()
             }
         }
 

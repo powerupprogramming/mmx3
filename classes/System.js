@@ -1,4 +1,4 @@
-import { CHANGESTATE, JUMPING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { CHANGESTATE, JUMPING, LEFT, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { GROUNDCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
@@ -635,20 +635,24 @@ class AnimationSystem extends System {
 
             const numOfFrames = Animation.frames[mode][direction];
 
+
             if (currentFrame === hold) {
 
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
 
-                Sprite.sprite.src = `../assets/MegamanX/${mode}/${currentFrame}.png`.toLowerCase()
+                Sprite.sprite.src = `../assets/MegamanX/${mode}/${direction}/${currentFrame}.png`.toLowerCase()
 
 
             } else {
                 const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
 
-                Sprite.sprite.src = `../assets/MegamanX/${mode}/${nextFrame}.png`.toLowerCase()
+                Sprite.sprite.src = `../assets/MegamanX/${mode}/${direction}/${nextFrame}.png`.toLowerCase()
 
                 Animation.currentFrame = nextFrame;
+
+
+
             }
 
             Animation.currentTimeOfAnimation = Date.now();
