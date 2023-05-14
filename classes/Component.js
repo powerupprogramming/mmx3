@@ -4,6 +4,23 @@ class Component {
     }
 }
 
+class StateComponent extends Component {
+    constructor(componentType, componentObj) {
+        super(componentType);
+
+        // Low & high equal to priority - the higher the priority the more it should be the one to be displayed..
+        // this.mainStates = componentObj.mainStates
+        // this.combinationStates = componentObj.combinationStates
+        // this.pureTransitions = componentObj.pureTransitions
+        this.prevState = componentObj.prevState;
+        this.currentState = componentObj.currentState;
+        this.priorityCurrentState = componentObj.priorityCurrentState;      // higher the stronger
+        this.prevGlobalState = componentObj.prevGlobalState;
+        this.globalState = componentObj.globalState;
+        // this.possibleStates = componentObj.possibleStates;
+    }
+}
+
 
 class PositionComponent extends Component {
     constructor(componentType, componentObj) {
@@ -177,4 +194,4 @@ class ItemComponent extends Component {
 
 
 
-export { RigidbodyComponent, HitboxComponent, ItemComponent, PositionComponent, ItemDropComponent, SpriteComponent, AnimationComponent, CollisionComponent, TransitionComponent, ActionableComponent, InventoryComponent, HealthComponent }
+export { RigidbodyComponent, HitboxComponent, ItemComponent, PositionComponent, ItemDropComponent, SpriteComponent, AnimationComponent, CollisionComponent, TransitionComponent, ActionableComponent, InventoryComponent, HealthComponent, StateComponent }

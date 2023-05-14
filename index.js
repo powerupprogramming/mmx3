@@ -1,8 +1,10 @@
 import Registry from "./classes/Registry.js";
-import { RUNNING, STANDING } from "./constants/AnimationComponentConstants.js";
-import { ANIMATION, RIGIDBODY } from "./constants/ComponentConstants.js";
-import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent } from "./utilities/CreateComponents.js";
+import { CHANGESTATE, JUMPING, RUNNING, STANDING } from "./constants/AnimationComponentConstants.js";
+import { ANIMATION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
+import { GROUNDCOLLISION } from "./constants/EventConstants.js";
+import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
+import { JumpingState, RunningState, StandingState } from "./states/MegamanStates.js";
+import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent } from "./utilities/CreateComponents.js";
 
 export const canvas = document.getElementById("gameScreen");
 canvas.width = window.innerWidth;
@@ -26,7 +28,7 @@ class Game {
         // this.numRows = 13;
         // this.numCols = 18;
         this.isDebug = false;
-        this.eventBus = [];
+        this.eventBus = { a: { aa: 1 } };           // { a: {} }
         this.audioObject = undefined;
         // this.inventoryScreen = new InventoryScreen();
         this.audioPath = "";
@@ -47,6 +49,7 @@ class Game {
         this.registry.addSystem(ACTIONABLE_SYSTEM);
         this.registry.addSystem(HEALTH_SYSTEM);
         this.registry.addSystem(ITEM_SYSTEM);
+        this.registry.addSystem(STATE_SYSTEM)
 
         document.addEventListener("keyup", this.handleUserInput)
         document.addEventListener("keydown", this.handleUserInput)
@@ -58,11 +61,12 @@ class Game {
         const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
         const c = CreateCollisionComponent();
 
-        const playerS = CreateSpriteComponent();
+        const playerSprite = CreateSpriteComponent();
+        const playerState = CreateMegamanXStateComponent();
 
 
 
-        this.player = this.registry.createEntity([p, playerS, a, m, c]);
+        this.player = this.registry.createEntity([p, playerSprite, a, m, c, playerState]);
 
 
         for (let i = 0; i < 10; i++) {
@@ -71,11 +75,8 @@ class Game {
             this.registry.createEntity([newP, s, c]);
         }
 
-        const p2 = CreatePositionComponent(400, 350, 50, 50);
-        this.registry.createEntity([p2, s, c]);
-
-        // const p3 = CreatePositionComponent(250, 100, 50, 50);
-        // this.registry.createEntity([p3, s, c]);
+        // const p2 = CreatePositionComponent(400, 350, 50, 50);
+        // this.registry.createEntity([p2, s, c]);
 
 
 
@@ -110,35 +111,65 @@ class Game {
 
     update = () => {
 
+        // console.log(Registry.getComponent(STATE, 0))
 
         if (!this.isPaused) {
 
-            for (let i = 0; i < this.eventBus.length; i++) {
-                const event = this.eventBus[i];
 
-                if (event) {
+            // for (let key in this.eventBus) {
+            //     const events = this.eventBus[key];
 
-                    const { args, func } = event;
-                    if (args.eventTime <= this.gameTime) {
-                        func(args);
-                        this.eventBus = this.eventBus.slice(0, i).concat(this.eventBus.slice(i + 1));
-                    }
-                }
+            //     for (let key2 in events) {
+            //         const event = events[i];
 
-            }
+            //         if (event) {
+            //             const { args, func } = event;
+
+            //             if (args.eventTime <= this.gameTime) {
+            //                 func(args);
+            //                 events.slice(0, i).concat(events.slice(i + 1));
+            //             }
+            //         }
+            //     }
+
+
+
+            // }
+
+            // for (let i = 0; i < this.eventBus.length; i++) {
+            //     const event = this.eventBus[i];
+
+            //     if (event) {
+
+            //         const { args, func } = event;
+            //         if (args.eventTime <= this.gameTime) {
+            //             func(args);
+            //             this.eventBus = this.eventBus.slice(0, i).concat(this.eventBus.slice(i + 1));
+            //         }
+            //     }
+
+            // }
 
 
             this.registry.update();
 
 
             this.registry.getSystem(ANIMATION_SYSTEM).update();
-            this.registry.getSystem(COLLISION_SYSTEM).update(this.player, this.deltaTime)
+            this.registry.getSystem(COLLISION_SYSTEM).update(this.player, this.eventBus, this.deltaTime)
             this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime)
             this.registry.getSystem(HITBOX_SYSTEM).update();
             this.registry.getSystem(HEALTH_SYSTEM).update(this.registry);
             this.registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
             this.registry.getSystem(ACTIONABLE_SYSTEM).update(this.player, this.eventBus);
             this.registry.getSystem(ITEM_SYSTEM).update(this.player)
+            this.registry.getSystem(STATE_SYSTEM).update(this.eventBus)
+
+
+            // Clear certain events 
+            if (this.eventBus[this.player.id][GROUNDCOLLISION]) {
+                this.eventBus[this.player.id][GROUNDCOLLISION]()
+                delete this.eventBus[this.player.id][GROUNDCOLLISION]
+            }
 
 
             // for (let i = 0; i < this.registry.enemies.length; i++) {
@@ -176,8 +207,9 @@ class Game {
         const { key, type } = e;
 
         if (this.player) {
-            const RigidBody = this.player.registry.getComponent(RIGIDBODY, this.player.id);
-            const Animation = this.player.registry.getComponent(ANIMATION, this.player.id);
+            const { id } = this.player;
+            const RigidBody = Registry.getComponent(RIGIDBODY, id);
+            const State = Registry.getComponent(STATE, id);
             if (type === "keydown") {
 
                 switch (key) {
@@ -186,8 +218,10 @@ class Game {
                         break;
                     }
                     case "a": {
-                        RigidBody.velocity.x = -5;
-                        Animation.mode = RUNNING;
+                        RigidBody.velocity.x = -50;
+                        this.eventBus[id][CHANGESTATE](new RunningState(0), id)
+                        // State.mainStates.running = 0;
+                        // State.mainStates.standing = null;
                         break;
                     }
 
@@ -196,11 +230,12 @@ class Game {
                         break;
                     }
                     case "d": {
-                        RigidBody.velocity.x = 5;
-                        Animation.mode = RUNNING;
+                        RigidBody.velocity.x = 50;
+                        this.eventBus[id][CHANGESTATE](new RunningState(0), id)
+                        // State.currentState = { RUNNING: 0 };
+                        // State.currentState.running = 0;
+                        // State.currentState.standing = null;
                         break
-
-                        break;
                     }
                     case "g": {
                         this.isDebug = !this.isDebug;
@@ -211,12 +246,17 @@ class Game {
                         break;
                     }
                     case "c": {
-                        // jump
-                        RigidBody.velocity.y = -300;
+
+                        if (State.currentState.name !== JUMPING) {
+                            // jump
+                            RigidBody.velocity.y = -300;
+                            this.eventBus[id][CHANGESTATE](new JumpingState(), id)
+                        }
                         break;
                     }
                     case "p": {
                         this.isPaused = !this.isPaused;
+                        break;
                     }
 
                     default: {
@@ -236,14 +276,19 @@ class Game {
                     }
                     case "a": {
                         RigidBody.velocity.x = 0;
-
-                        Animation.mode = STANDING;
+                        this.eventBus[id][CHANGESTATE](new StandingState(), id)
+                        // State.currentState = { STANDING: 0 };
+                        // State.currentState.standing = 0;
+                        // State.currentState.running = null;
                         break;
                     }
                     case "d": {
                         RigidBody.velocity.x = 0;
+                        this.eventBus[id][CHANGESTATE](new StandingState(), id)
 
-                        Animation.mode = STANDING;
+                        // State.currentState.standing = 0;
+                        // State.currentState.running = null;
+
                         break;
                     }
                     case "v": {
@@ -253,8 +298,9 @@ class Game {
                     case "c": {
                         break;
                     }
-                    default:
+                    default: {
                         break;
+                    }
                 }
             }
         }

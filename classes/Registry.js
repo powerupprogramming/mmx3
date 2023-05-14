@@ -1,13 +1,16 @@
 import { Entity } from "./Entity.js";
-import { TransitionComponent, PositionComponent, SpriteComponent, RigidbodyComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent } from "./Component.js";
-import { AnimationSystem, ActionableSystem, CollisionSystem, MovementSystem, RenderSystem, TransitionSystem, HitboxSystem, HealthSystem, ItemSystem } from "./System.js"
-import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, RIGIDBODY, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
-import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HITBOX_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM, HEALTH_SYSTEM, ITEM_SYSTEM } from "../constants/SystemConstants.js";
+import { StateComponent, TransitionComponent, PositionComponent, SpriteComponent, RigidbodyComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent } from "./Component.js";
+import { AnimationSystem, ActionableSystem, CollisionSystem, MovementSystem, RenderSystem, TransitionSystem, HitboxSystem, HealthSystem, ItemSystem, StateSystem } from "./System.js"
+import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, RIGIDBODY, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
+import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HITBOX_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM, HEALTH_SYSTEM, ITEM_SYSTEM, STATE_SYSTEM } from "../constants/SystemConstants.js";
 
 
 
 
 class Registry {
+
+    static componentEntityMapping = {}
+
     constructor() {
         this.numberOfEntities = 0;
         this.systems = {}               // object { name (string) : RenderSystem,VelocitySystem, etc (string) }
@@ -23,7 +26,6 @@ class Registry {
                 }
             }
         */
-        this.componentEntityMapping = {}
 
 
     }
@@ -87,10 +89,10 @@ class Registry {
         this.numberOfEntities++;
 
 
-        const spriteComponent = this.getComponent(SPRITE, newEntity.id)
+        const spriteComponent = Registry.getComponent(SPRITE, newEntity.id)
 
         if (spriteComponent.sprite.src.includes("undefined") == true) {
-            const animationComponent = this.getComponent(ANIMATION, newEntity.id);
+            const animationComponent = Registry.getComponent(ANIMATION, newEntity.id);
             if (animationComponent) {
                 const mode = animationComponent.mode
                 spriteComponent.sprite.src = `../assets/MegamanX/${mode}/0.png`.toLowerCase()
@@ -141,6 +143,11 @@ class Registry {
                 newSystem = new ItemSystem(ITEM_SYSTEM);
                 break;
             }
+            case STATE_SYSTEM: {
+                newSystem = new StateSystem(STATE_SYSTEM);
+                break;
+            }
+
             default: {
                 break;
             }
@@ -155,27 +162,27 @@ class Registry {
         switch (component["name"]) {
             case POSITION: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[POSITION]) {
+                if (!Registry.componentEntityMapping[POSITION]) {
 
-                    this.componentEntityMapping[POSITION] = {}
+                    Registry.componentEntityMapping[POSITION] = {}
                 }
-                this.componentEntityMapping[POSITION][this.numberOfEntities] = new PositionComponent(POSITION, componentObj);
+                Registry.componentEntityMapping[POSITION][this.numberOfEntities] = new PositionComponent(POSITION, componentObj);
                 break;
             }
             case RIGIDBODY: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[RIGIDBODY]) {
-                    this.componentEntityMapping[RIGIDBODY] = {};
+                if (!Registry.componentEntityMapping[RIGIDBODY]) {
+                    Registry.componentEntityMapping[RIGIDBODY] = {};
                 }
-                this.componentEntityMapping[RIGIDBODY][this.numberOfEntities] = new RigidbodyComponent(RIGIDBODY, componentObj);
+                Registry.componentEntityMapping[RIGIDBODY][this.numberOfEntities] = new RigidbodyComponent(RIGIDBODY, componentObj);
                 break;
             }
             case SPRITE: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[SPRITE]) {
-                    this.componentEntityMapping[SPRITE] = {};
+                if (!Registry.componentEntityMapping[SPRITE]) {
+                    Registry.componentEntityMapping[SPRITE] = {};
                 }
-                this.componentEntityMapping[SPRITE][this.numberOfEntities] = new SpriteComponent(SPRITE, componentObj);
+                Registry.componentEntityMapping[SPRITE][this.numberOfEntities] = new SpriteComponent(SPRITE, componentObj);
 
 
 
@@ -183,83 +190,91 @@ class Registry {
             }
             case ANIMATION: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[ANIMATION]) {
-                    this.componentEntityMapping[ANIMATION] = {};
+                if (!Registry.componentEntityMapping[ANIMATION]) {
+                    Registry.componentEntityMapping[ANIMATION] = {};
                 }
-                this.componentEntityMapping[ANIMATION][this.numberOfEntities] = new AnimationComponent(ANIMATION, componentObj);
+                Registry.componentEntityMapping[ANIMATION][this.numberOfEntities] = new AnimationComponent(ANIMATION, componentObj);
                 break;
             }
             // case PLAYER: {
             //     const componentObj = component["value"];
-            //     if (!this.componentEntityMapping[PLAYER]) {
-            //         this.componentEntityMapping[PLAYER] = {};
+            //     if (!Registry.componentEntityMapping[PLAYER]) {
+            //         Registry.componentEntityMapping[PLAYER] = {};
             //     }
-            //     this.componentEntityMapping[PLAYER][this.numberOfEntities] = new PlayerComponent(PLAYER, componentObj);
+            //     Registry.componentEntityMapping[PLAYER][this.numberOfEntities] = new PlayerComponent(PLAYER, componentObj);
             //     break;
             // }
             case COLLISION: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[COLLISION]) {
-                    this.componentEntityMapping[COLLISION] = {};
+                if (!Registry.componentEntityMapping[COLLISION]) {
+                    Registry.componentEntityMapping[COLLISION] = {};
                 }
-                this.componentEntityMapping[COLLISION][this.numberOfEntities] = new CollisionComponent(COLLISION, componentObj);
+                Registry.componentEntityMapping[COLLISION][this.numberOfEntities] = new CollisionComponent(COLLISION, componentObj);
                 break;
             }
             case TRANSITION: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[TRANSITION]) {
-                    this.componentEntityMapping[TRANSITION] = {};
+                if (!Registry.componentEntityMapping[TRANSITION]) {
+                    Registry.componentEntityMapping[TRANSITION] = {};
                 }
-                this.componentEntityMapping[TRANSITION][this.numberOfEntities] = new TransitionComponent(TRANSITION, componentObj);
+                Registry.componentEntityMapping[TRANSITION][this.numberOfEntities] = new TransitionComponent(TRANSITION, componentObj);
                 break;
             }
-            case CHARACTER: {
-                const componentObj = component["value"];
-                if (!this.componentEntityMapping[CHARACTER]) {
-                    this.componentEntityMapping[CHARACTER] = {};
-                }
-                this.componentEntityMapping[CHARACTER][this.numberOfEntities] = new CharacterComponent(CHARACTER, componentObj);
-                break;
-            }
+            // case CHARACTER: {
+            //     const componentObj = component["value"];
+            //     if (!Registry.componentEntityMapping[CHARACTER]) {
+            //         Registry.componentEntityMapping[CHARACTER] = {};
+            //     }
+            //     Registry.componentEntityMapping[CHARACTER][this.numberOfEntities] = new CharacterComponent(CHARACTER, componentObj);
+            //     break;
+            // }
             case ACTIONABLE: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[ACTIONABLE]) {
-                    this.componentEntityMapping[ACTIONABLE] = {};
+                if (!Registry.componentEntityMapping[ACTIONABLE]) {
+                    Registry.componentEntityMapping[ACTIONABLE] = {};
                 }
-                this.componentEntityMapping[ACTIONABLE][this.numberOfEntities] = new ActionableComponent(ACTIONABLE, componentObj);
+                Registry.componentEntityMapping[ACTIONABLE][this.numberOfEntities] = new ActionableComponent(ACTIONABLE, componentObj);
                 break;
             }
             case HITBOX: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[HITBOX]) {
-                    this.componentEntityMapping[HITBOX] = {};
+                if (!Registry.componentEntityMapping[HITBOX]) {
+                    Registry.componentEntityMapping[HITBOX] = {};
                 }
-                this.componentEntityMapping[HITBOX][this.numberOfEntities] = new HitboxComponent(HITBOX, componentObj);
+                Registry.componentEntityMapping[HITBOX][this.numberOfEntities] = new HitboxComponent(HITBOX, componentObj);
                 break;
             }
             case HEALTH: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[HEALTH]) {
-                    this.componentEntityMapping[HEALTH] = {};
+                if (!Registry.componentEntityMapping[HEALTH]) {
+                    Registry.componentEntityMapping[HEALTH] = {};
                 }
-                this.componentEntityMapping[HEALTH][this.numberOfEntities] = new HealthComponent(HEALTH, componentObj);
+                Registry.componentEntityMapping[HEALTH][this.numberOfEntities] = new HealthComponent(HEALTH, componentObj);
                 break;
             }
 
             case ITEM: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[ITEM]) {
-                    this.componentEntityMapping[ITEM] = {};
+                if (!Registry.componentEntityMapping[ITEM]) {
+                    Registry.componentEntityMapping[ITEM] = {};
                 }
-                this.componentEntityMapping[ITEM][this.numberOfEntities] = new ItemComponent(ITEM, componentObj);
+                Registry.componentEntityMapping[ITEM][this.numberOfEntities] = new ItemComponent(ITEM, componentObj);
                 break;
             }
             case ITEMDROP: {
                 const componentObj = component["value"];
-                if (!this.componentEntityMapping[ITEMDROP]) {
-                    this.componentEntityMapping[ITEMDROP] = {};
+                if (!Registry.componentEntityMapping[ITEMDROP]) {
+                    Registry.componentEntityMapping[ITEMDROP] = {};
                 }
-                this.componentEntityMapping[ITEMDROP][this.numberOfEntities] = new ItemDropComponent(ITEMDROP, componentObj);
+                Registry.componentEntityMapping[ITEMDROP][this.numberOfEntities] = new ItemDropComponent(ITEMDROP, componentObj);
+                break;
+            }
+            case STATE: {
+                const componentObj = component["value"];
+                if (!Registry.componentEntityMapping[STATE]) {
+                    Registry.componentEntityMapping[STATE] = {};
+                }
+                Registry.componentEntityMapping[STATE][this.numberOfEntities] = new StateComponent(STATE, componentObj)
                 break;
             }
 
@@ -274,7 +289,7 @@ class Registry {
 
         }
 
-        // console.log("This componentEntityMapping was updated for component: ", component["name"], " and id: ", this.numberOfEntities, " here is final result: ", this.componentEntityMapping)
+        // console.log("This componentEntityMapping was updated for component: ", component["name"], " and id: ", this.numberOfEntities, " here is final result: ", Registry.componentEntityMapping)
 
     }
 
@@ -290,7 +305,7 @@ class Registry {
             for (let i = 0; i < componentRequirements.length; i++) {
                 const req = componentRequirements[i];           // req is name of component like RIGIDBODY or NODE
                 const entityId = entity.id;
-                if (this.componentEntityMapping[req] === undefined || this.componentEntityMapping[req][entityId] === undefined) {
+                if (Registry.componentEntityMapping[req] === undefined || Registry.componentEntityMapping[req][entityId] === undefined) {
                     addToSystem = false;
                     break;
                 }
@@ -309,11 +324,11 @@ class Registry {
         return this.systems[systemType];
     }
 
-    getComponent = (componentType, entityId) => {
+    static getComponent = (componentType, entityId) => {
 
 
-        if (this.componentEntityMapping[componentType]) {
-            return this.componentEntityMapping[componentType][entityId];
+        if (Registry.componentEntityMapping[componentType]) {
+            return Registry.componentEntityMapping[componentType][entityId];
         } else {
 
             return undefined;

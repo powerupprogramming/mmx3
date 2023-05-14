@@ -1,5 +1,9 @@
-import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION } from "../constants/ComponentConstants.js";
+import { CHANGESTATE, JUMPING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
+import { GROUNDCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
+import { StandingState } from "../states/MegamanStates.js";
+import Registry from "./Registry.js";
 
 class System {
     constructor(systemType) {
@@ -18,12 +22,11 @@ class MovementSystem extends System {
     update = (dt) => {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
-            const { getComponent } = entity.registry;
 
-            const Collision = getComponent(COLLISION, entity.id);
-            const Position = getComponent(POSITION, entity.id);
-            const RigidBody = getComponent(RIGIDBODY, entity.id);
-            const Animation = getComponent(ANIMATION, entity.id);
+            const Collision = Registry.getComponent(COLLISION, entity.id);
+            const Position = Registry.getComponent(POSITION, entity.id);
+            const RigidBody = Registry.getComponent(RIGIDBODY, entity.id);
+            const Animation = Registry.getComponent(ANIMATION, entity.id);
 
             const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
 
@@ -118,23 +121,22 @@ class CollisionSystem extends System {
         this.componentRequirements = [POSITION, COLLISION]
     }
 
-    update = (player, deltaTime) => {
+    update = (player, eventBus, deltaTime) => {
 
         if (player) {
             for (let i = 0; i < this.entities.length; i++) {
 
                 const entity = this.entities[i];
-                const { getComponent } = entity.registry;
 
 
 
                 if (player.id === entity.id) continue;
 
 
-                const { x: px, y: py, width: pwidth, height: pheight } = getComponent(POSITION, player.id)
-                const { x: ex, y: ey, width: ewidth, height: eheight } = getComponent(POSITION, entity.id)
-                const RigidBody = getComponent(RIGIDBODY, player.id)
-                const Collision = getComponent(COLLISION, player.id)
+                const { x: px, y: py, width: pwidth, height: pheight } = Registry.getComponent(POSITION, player.id)
+                const { x: ex, y: ey, width: ewidth, height: eheight } = Registry.getComponent(POSITION, entity.id)
+                const RigidBody = Registry.getComponent(RIGIDBODY, player.id)
+                const Collision = Registry.getComponent(COLLISION, player.id)
 
                 const { velocity } = RigidBody;
 
@@ -152,6 +154,18 @@ class CollisionSystem extends System {
                     playerBottomPoint.y + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
                     Collision.collisionBottom = true;
+
+                    if (!eventBus[player.id]) {
+                        eventBus[player.id] = {}
+                    }
+                    eventBus[player.id][GROUNDCOLLISION] = () => {
+                        const stateComponent = Registry.getComponent(STATE, player.id);
+                        if (stateComponent.currentState && stateComponent.currentState.name === JUMPING) {
+                            eventBus[player.id][TRANSITIONSTATE](new StandingState(), player.id)
+
+                        }
+                    }
+
                 }
 
                 if (
@@ -531,12 +545,12 @@ class RenderSystem extends System {
 
             const entity = this.entities[i]
 
-            const Position = entity.registry.componentEntityMapping[POSITION][entity.id];
-            const Sprite = entity.registry.componentEntityMapping[SPRITE][entity.id];
+            const Position = Registry.getComponent(POSITION, entity.id);
+            const Sprite = Registry.getComponent(SPRITE, entity.id);
             let Collision = undefined;
 
-            if (entity.registry.componentEntityMapping[COLLISION] && entity.registry.componentEntityMapping[COLLISION][entity.id]) {
-                Collision = entity.registry.componentEntityMapping[COLLISION][entity.id]
+            if (Registry.componentEntityMapping[COLLISION] && Registry.getComponent(COLLISION, entity.id)) {
+                Collision = Registry.getComponent(COLLISION, entity.id)
             }
 
             const { x, y, width, height } = Position;
@@ -614,25 +628,34 @@ class AnimationSystem extends System {
 
 
 
-            const Animation = entity.registry.componentEntityMapping[ANIMATION][entity.id];
-            const { mode, direction } = Animation;
-            const { animationLength } = Animation.frames[mode];
+            const Animation = Registry.getComponent(ANIMATION, entity.id);
+            const { mode, direction, currentFrame } = Animation;
+            const { animationLength, hold } = Animation.frames[mode];
+
 
             const numOfFrames = Animation.frames[mode][direction];
 
-            const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
+            if (currentFrame === hold) {
+
+                const Sprite = Registry.getComponent(SPRITE, entity.id);
+
+                Sprite.sprite.src = `../assets/MegamanX/${mode}/${currentFrame}.png`.toLowerCase()
 
 
+            } else {
+                const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
+                const Sprite = Registry.getComponent(SPRITE, entity.id);
 
-            const Sprite = entity.registry.componentEntityMapping[SPRITE][entity.id];
-
-            if (nextFrame !== Animation.currentFrame) {
                 Sprite.sprite.src = `../assets/MegamanX/${mode}/${nextFrame}.png`.toLowerCase()
+
+                Animation.currentFrame = nextFrame;
             }
 
-
             Animation.currentTimeOfAnimation = Date.now();
-            Animation.currentFrame = nextFrame;
+
+
+
+
 
 
 
@@ -683,6 +706,87 @@ class AnimationSystem extends System {
 
         }
     }
+}
+
+class StateSystem extends System {
+    constructor(systemType) {
+        super(systemType);
+        this.componentRequirements = [STATE]
+    }
+
+    update = (eventBus) => {
+        for (let i = 0; i < this.entities.length; i++) {
+            const id = this.entities[i].id;
+
+            if (eventBus[id] === undefined) {
+                eventBus[id] = {};
+            }
+
+            if (!eventBus[id][CHANGESTATE]) {
+                eventBus[id][CHANGESTATE] = this.changeState;
+            }
+
+            if (!eventBus[id][TRANSITIONSTATE]) {
+                eventBus[id][TRANSITIONSTATE] = this.transitionState;
+            }
+
+
+
+            const stateComponent = Registry.getComponent(STATE, id);
+
+            if (stateComponent.currentState) {
+
+                stateComponent.currentState.execute(id);
+
+            }
+
+
+        }
+    }
+
+    transitionState = (newState, id) => {
+        const stateComponent = Registry.getComponent(STATE, id);
+
+
+
+        if (stateComponent.currentState) {
+
+            // this.currentState.exit()
+            stateComponent.prevState = stateComponent.currentState;
+        }
+
+        // this currentSTate.enter()
+        stateComponent.currentState = newState;
+        stateComponent.currentState.enter(id);
+    }
+
+
+    // {RUNNING: 0 }
+    changeState = (newState, id) => {
+        const stateComponent = Registry.getComponent(STATE, id);
+
+
+
+        if (stateComponent.currentState) {
+
+            if (stateComponent.currentState.priority > newState.priority) {
+                return;
+            }
+
+
+
+            // this.currentState.exit()
+            stateComponent.prevState = stateComponent.currentState;
+        }
+
+        // this currentSTate.enter()
+        stateComponent.currentState = newState;
+        stateComponent.currentState.enter(id);
+
+    }
+
+
+
 }
 
 const DetermineDirectionOfContact = (receiver, sender) => {
@@ -738,6 +842,6 @@ const DetermineDirectionOfContact = (receiver, sender) => {
 
 // }
 
-export { MovementSystem, RenderSystem, ItemSystem, AnimationSystem, CollisionSystem, HealthSystem, TransitionSystem, ActionableSystem, HitboxSystem };
+export { StateSystem, MovementSystem, RenderSystem, ItemSystem, AnimationSystem, CollisionSystem, HealthSystem, TransitionSystem, ActionableSystem, HitboxSystem };
 
 
