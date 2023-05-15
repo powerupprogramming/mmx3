@@ -16,7 +16,6 @@ class Registry {
         this.systems = {}               // object { name (string) : RenderSystem,VelocitySystem, etc (string) }
         this.entitiesToBeAdded = [];    // entities[]
         this.entitiesToBeKilled = []    // entities[]
-
         /*
         Fixed array length for components - 1st order
         map for second order

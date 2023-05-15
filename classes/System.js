@@ -1,4 +1,5 @@
-import { CHANGESTATE, JUMPING, LEFT, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { CHANGESTATE, JUMPING, LEFT, RUNNING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { MEGAMAN } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { GROUNDCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
@@ -569,8 +570,13 @@ class RenderSystem extends System {
             }
             else {
 
+
+                c.imageSmoothingEnabled = true;
+                c.imageSmoothingQuality = "high";
                 c.globalCompositeOperation = "destination-over"
                 c.drawImage(sprite, x, y, width, height)
+
+
 
             }
 
@@ -621,12 +627,11 @@ class AnimationSystem extends System {
         this.componentRequirements = [POSITION, SPRITE, ANIMATION]
     }
 
-    update = () => {
+    update = (assets) => {
 
         for (let i = 0; i < this.entities.length; i++) {
+
             const entity = this.entities[i];
-
-
 
             const Animation = Registry.getComponent(ANIMATION, entity.id);
             const { mode, direction, currentFrame } = Animation;
@@ -635,78 +640,22 @@ class AnimationSystem extends System {
 
             const numOfFrames = Animation.frames[mode][direction];
 
-
             if (currentFrame === hold) {
 
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
-
-                Sprite.sprite.src = `../assets/MegamanX/${mode}/${direction}/${currentFrame}.png`.toLowerCase()
-
+                Sprite.sprite = assets[MEGAMAN][mode][direction][currentFrame];
 
             } else {
                 const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
 
-                Sprite.sprite.src = `../assets/MegamanX/${mode}/${direction}/${nextFrame}.png`.toLowerCase()
+                Sprite.sprite = assets[MEGAMAN][mode][direction][nextFrame]
 
                 Animation.currentFrame = nextFrame;
-
-
-
             }
 
             Animation.currentTimeOfAnimation = Date.now();
 
-
-
-
-
-
-
-
-
-
-            // const { facing, shouldAnimate, isAttackingA, isStatic, removeOn, isAttackingB } = entity.components["Animation"];
-
-            // if (isStatic) {
-            //     const currentFrame = Math.floor(
-            //         (gameTime - entity.components["Animation"]["currentTimeOfAnimation"]) *
-            //         entity.components["Animation"]["frames"]["frameSpeedRate"] / 1000
-            //     ) % entity.components["Animation"]["frames"]["numFrames"];
-
-
-            //     entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"]["srcRect"][currentFrame];
-
-            //     entity.components["Animation"]["frames"]["currentFrame"] = currentFrame;
-            // }
-            // else if (shouldAnimate || isAttackingA || isAttackingB) {
-
-            //     let mode;
-            //     if (!shouldAnimate && (isAttackingA || isAttackingB)) {
-            //         mode = "attack";
-            //     } else {
-            //         mode = "move"
-            //     }
-
-            //     const currentFrame = Math.floor(
-            //         (gameTime - entity.components["Animation"]["currentTimeOfAnimation"]) *
-            //         entity.components["Animation"]["frames"][facing][mode]["frameSpeedRate"] / 1000
-            //     ) % entity.components["Animation"]["frames"][facing][mode]["numFrames"];
-
-
-            //     entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"][facing][mode]["srcRect"][currentFrame];
-
-            //     entity.components["Animation"]["frames"][facing][mode]["currentFrame"] = currentFrame;
-            // }
-            // else if (!shouldAnimate && !isAttackingA && !isAttackingB) {
-            //     entity.components["Sprite"]["srcRect"] = entity.components["Animation"]["frames"][facing]["move"]["srcRect"][0];
-            //     entity.components["Animation"]["frames"][facing]["move"]["currentFrame"] = 0;
-            // }
-
-            // if (removeOn && removeOn === entity.components["Animation"]["frames"]["currentFrame"]) {
-            //     entity.registry.entitiesToBeRemoved.push(entity);
-
-            // }
 
         }
     }

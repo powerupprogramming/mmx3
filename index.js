@@ -1,10 +1,12 @@
 import Registry from "./classes/Registry.js";
-import { CHANGESTATE, JUMPING, LEFT, RIGHT, RUNNING, STANDING } from "./constants/AnimationComponentConstants.js";
+import { CHANGESTATE, JUMPING, JUMPINGFRAMES, LEFT, RIGHT, RUNNING, RUNNINGFRAMES, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
+import { MEGAMAN } from "./constants/AssetConstants.js";
 import { ANIMATION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
 import { GROUNDCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
 import { JumpingState, RunningState, StandingState } from "./states/MegamanStates.js";
 import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent } from "./utilities/CreateComponents.js";
+
 
 export const canvas = document.getElementById("gameScreen");
 canvas.width = window.innerWidth;
@@ -25,16 +27,32 @@ class Game {
         this.player = undefined;
         this.registry = new Registry();
         this.gameTime = Date.now();
-        // this.numRows = 13;
-        // this.numCols = 18;
+
         this.isDebug = false;
         this.eventBus = { a: { aa: 1 } };           // { a: {} }
         this.audioObject = undefined;
-        // this.inventoryScreen = new InventoryScreen();
+
         this.audioPath = "";
         this.isPaused = false;
         this.deltaTime = 0;
         this.millisecondsPreviousFrame = 0;
+
+        this.assets = {
+            [MEGAMAN]: {
+                [STANDING]: {
+                    [LEFT]: [],
+                    [RIGHT]: []
+                },
+                [RUNNING]: {
+                    [LEFT]: [],
+                    [RIGHT]: []
+                },
+                [JUMPING]: {
+                    [LEFT]: [],
+                    [RIGHT]: []
+                }
+            }
+        }
     }
 
     initialize = () => {
@@ -78,6 +96,13 @@ class Game {
         // const p2 = CreatePositionComponent(400, 350, 50, 50);
         // this.registry.createEntity([p2, s, c]);
 
+        const backgroundSprite = CreateSpriteComponent("./assets/Background/Intro-Stage.png");
+        const backgroundPosition = CreatePositionComponent(0, 0, 20000, 5000);
+
+        // this.registry.createEntity([backgroundPosition, backgroundSprite])
+        this.loadAssets();
+
+
 
 
     }
@@ -111,50 +136,12 @@ class Game {
 
     update = () => {
 
-        // console.log(Registry.getComponent(STATE, 0))
-
         if (!this.isPaused) {
-
-
-            // for (let key in this.eventBus) {
-            //     const events = this.eventBus[key];
-
-            //     for (let key2 in events) {
-            //         const event = events[i];
-
-            //         if (event) {
-            //             const { args, func } = event;
-
-            //             if (args.eventTime <= this.gameTime) {
-            //                 func(args);
-            //                 events.slice(0, i).concat(events.slice(i + 1));
-            //             }
-            //         }
-            //     }
-
-
-
-            // }
-
-            // for (let i = 0; i < this.eventBus.length; i++) {
-            //     const event = this.eventBus[i];
-
-            //     if (event) {
-
-            //         const { args, func } = event;
-            //         if (args.eventTime <= this.gameTime) {
-            //             func(args);
-            //             this.eventBus = this.eventBus.slice(0, i).concat(this.eventBus.slice(i + 1));
-            //         }
-            //     }
-
-            // }
-
 
             this.registry.update();
 
 
-            this.registry.getSystem(ANIMATION_SYSTEM).update();
+            this.registry.getSystem(ANIMATION_SYSTEM).update(this.assets);
             this.registry.getSystem(COLLISION_SYSTEM).update(this.player, this.eventBus, this.deltaTime)
             this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime)
             this.registry.getSystem(HITBOX_SYSTEM).update();
@@ -170,15 +157,6 @@ class Game {
                 this.eventBus[this.player.id][GROUNDCOLLISION]()
                 delete this.eventBus[this.player.id][GROUNDCOLLISION]
             }
-
-
-            // for (let i = 0; i < this.registry.enemies.length; i++) {
-            //     const enemy = this.registry.enemies[i];
-
-            //     enemy.stateMachine.update();
-            // }
-
-
 
         }
 
@@ -310,6 +288,33 @@ class Game {
         }
     }
 
+    loadAssets = () => {
+
+        // Load Megaman X assets to be used in Animations
+        const modes = [RUNNING, STANDING, JUMPING];
+        const directions = [LEFT, RIGHT]
+        const basePath = "./assets/MegamanX/";
+
+        for (let mode of modes) {
+            for (let direction of directions) {
+                let counter = 0;
+                let endPath = ''
+                let terminatingValue = undefined;
+                if (mode === RUNNING) terminatingValue = RUNNINGFRAMES;
+                else if (mode === JUMPING) terminatingValue = JUMPINGFRAMES;
+                else if (mode === STANDING) terminatingValue = STANDINGFRAMES
+
+                while (counter < terminatingValue) {
+                    endPath = `${mode}/${direction}/${counter}`;
+                    const newAsset = new Image();
+                    newAsset.src = basePath + endPath + ".png";
+                    this.assets[MEGAMAN][mode][direction].push(newAsset)
+                    counter++;
+                }
+
+            }
+        }
+    }
 
 }
 
