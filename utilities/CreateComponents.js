@@ -1,4 +1,4 @@
-import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES } from "../constants/AnimationComponentConstants.js";
+import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES } from "../constants/AnimationComponentConstants.js";
 import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE } from "../constants/ComponentConstants.js";
 
 // x: number, y : number, width: number: height: number
@@ -80,6 +80,13 @@ const CreateMegamanXAnimationComponent = () => {
                     hold: 5,
                     [RIGHT]: JUMPINGFRAMES,
                     [LEFT]: JUMPINGFRAMES
+                },
+                [DASHING]: {
+                    animationLength: 300,
+                    hold: 1,
+                    [RIGHT]: DASHINGFRAMES,
+                    [LEFT]: DASHINGFRAMES,
+
                 }
             }
         }

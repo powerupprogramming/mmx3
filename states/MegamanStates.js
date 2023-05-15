@@ -1,10 +1,14 @@
 import Registry from "../classes/Registry.js"
-import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING } from "../constants/AnimationComponentConstants.js"
+import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING, DASHING, CHANGESTATE } from "../constants/AnimationComponentConstants.js"
 import { ANIMATION, RIGIDBODY, SPRITE, STATE } from "../constants/ComponentConstants.js"
 
 
 
 class MegamanState {
+
+    constructor() {
+        this.startTime = Date.now();
+    }
 
     transition = (id) => {
         const animationComponent = Registry.getComponent(ANIMATION, id);
@@ -22,6 +26,12 @@ class MegamanState {
                     }
 
                     break;
+                }
+                case DASHING: {
+                    if (animationComponent) {
+                        animationComponent.mode = DASHING;
+                    }
+                    break
                 }
                 case STANDING: {
 
@@ -76,6 +86,8 @@ export class StandingState extends MegamanState {
 
     enter = (id) => {
         const stateComponent = Registry.getComponent(STATE, id);
+        const rigidbodyComponent = Registry.getComponent(RIGIDBODY, id);
+        rigidbodyComponent.velocity.x = 0;
         stateComponent.priorityCurrentState = 1;
         this.transition(id)
     }
@@ -99,6 +111,32 @@ class Takeoff {
     exit = () => { }
 }
 
+export class DashingState extends MegamanState {
+    constructor() {
+        super()
+        this.name = DASHING
+    }
+
+    enter = (id) => {
+        const stateComponent = Registry.getComponent(STATE, id)
+
+        stateComponent.priorityCurrentState = 2
+        this.transition(id)
+    }
+
+    execute = (id, eventBus) => {
+
+        if (Date.now() > this.startTime + 500) {
+
+            eventBus[id][CHANGESTATE](
+                new StandingState(), id
+            )
+        }
+
+    }
+
+    exit = () => { }
+}
 export class JumpingState extends MegamanState {
     constructor() {
         super();

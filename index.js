@@ -1,10 +1,10 @@
 import Registry from "./classes/Registry.js";
-import { CHANGESTATE, JUMPING, JUMPINGFRAMES, LEFT, RIGHT, RUNNING, RUNNINGFRAMES, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
+import { CHANGESTATE, DASHING, DASHINGFRAMES, JUMPING, JUMPINGFRAMES, LEFT, RIGHT, RUNNING, RUNNINGFRAMES, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "./constants/AssetConstants.js";
 import { ANIMATION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
 import { GROUNDCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { JumpingState, RunningState, StandingState } from "./states/MegamanStates.js";
+import { DashingState, JumpingState, RunningState, StandingState } from "./states/MegamanStates.js";
 import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent } from "./utilities/CreateComponents.js";
 
 
@@ -17,7 +17,7 @@ export const TILE_SIZE = 70
 
 
 const FPS = 60;
-export const MILLISECONDS_PER_FRAME = 1000 / FPS           // for 60 frame a second, its 16.666 MILLISECONDS per frame
+export const MILLISECONDS_PER_FRAME = 1000 / FPS           // for 60 frame a second, its 16.666 MIaLLISECONDS per frame
 export const PIXELS_PER_METER = 50;
 
 
@@ -50,7 +50,12 @@ class Game {
                 [JUMPING]: {
                     [LEFT]: [],
                     [RIGHT]: []
+                },
+                [DASHING]: {
+                    [LEFT]: [],
+                    [RIGHT]: []
                 }
+
             }
         }
     }
@@ -87,14 +92,14 @@ class Game {
         this.player = this.registry.createEntity([p, playerSprite, a, m, c, playerState]);
 
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
             const xVal = i * 50 + 200;
             const newP = CreatePositionComponent(xVal, 400, 50, 50);
             this.registry.createEntity([newP, s, c]);
         }
 
-        // const p2 = CreatePositionComponent(400, 350, 50, 50);
-        // this.registry.createEntity([p2, s, c]);
+        const p2 = CreatePositionComponent(1000, 350, 50, 50);
+        this.registry.createEntity([p2, s, c]);
 
         const backgroundSprite = CreateSpriteComponent("./assets/Background/Intro-Stage.png");
         const backgroundPosition = CreatePositionComponent(0, 0, 20000, 5000);
@@ -152,7 +157,7 @@ class Game {
             this.registry.getSystem(STATE_SYSTEM).update(this.eventBus)
 
 
-            // Clear certain events 
+            // Clear certain events
             if (this.eventBus[this.player.id][GROUNDCOLLISION]) {
                 this.eventBus[this.player.id][GROUNDCOLLISION]()
                 delete this.eventBus[this.player.id][GROUNDCOLLISION]
@@ -177,9 +182,9 @@ class Game {
         /*
             {
                 key: string
-                type: string 
+                type: string
             }
-            
+
         */
 
         const { key, type } = e;
@@ -224,7 +229,8 @@ class Game {
                         break;
                     }
                     case "v": {
-
+                        RigidBody.velocity.x = Animation.direction === LEFT ? -400 : 400
+                        this.eventBus[id][CHANGESTATE](new DashingState(), id)
                         break;
                     }
                     case "c": {
@@ -291,7 +297,7 @@ class Game {
     loadAssets = () => {
 
         // Load Megaman X assets to be used in Animations
-        const modes = [RUNNING, STANDING, JUMPING];
+        const modes = [RUNNING, STANDING, JUMPING, DASHING];
         const directions = [LEFT, RIGHT]
         const basePath = "./assets/MegamanX/";
 
@@ -303,7 +309,7 @@ class Game {
                 if (mode === RUNNING) terminatingValue = RUNNINGFRAMES;
                 else if (mode === JUMPING) terminatingValue = JUMPINGFRAMES;
                 else if (mode === STANDING) terminatingValue = STANDINGFRAMES
-
+                else if (mode === DASHING) terminatingValue = DASHINGFRAMES
                 while (counter < terminatingValue) {
                     endPath = `${mode}/${direction}/${counter}`;
                     const newAsset = new Image();

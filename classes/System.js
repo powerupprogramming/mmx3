@@ -634,7 +634,7 @@ class AnimationSystem extends System {
             const entity = this.entities[i];
 
             const Animation = Registry.getComponent(ANIMATION, entity.id);
-            const { mode, direction, currentFrame } = Animation;
+            const { mode, direction, currentFrame, startOfAnimation } = Animation;
             const { animationLength, hold } = Animation.frames[mode];
 
 
@@ -647,6 +647,7 @@ class AnimationSystem extends System {
 
             } else {
                 const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
+
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
 
                 Sprite.sprite = assets[MEGAMAN][mode][direction][nextFrame]
@@ -689,7 +690,7 @@ class StateSystem extends System {
 
             if (stateComponent.currentState) {
 
-                stateComponent.currentState.execute(id);
+                stateComponent.currentState.execute(id, eventBus);
 
             }
 
@@ -717,7 +718,6 @@ class StateSystem extends System {
     // {RUNNING: 0 }
     changeState = (newState, id) => {
         const stateComponent = Registry.getComponent(STATE, id);
-
 
 
         if (stateComponent.currentState) {
