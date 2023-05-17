@@ -1,9 +1,9 @@
-import { CHANGESTATE, JUMPING, LEFT, RUNNING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, JUMPING, LEFT, RUNNING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
-import { GROUNDCOLLISION } from "../constants/EventConstants.js";
+import { COMBINATION, GROUNDCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
-import { StandingState } from "../states/MegamanStates.js";
+import { RunningState, StandingState } from "../states/MegamanStates.js";
 import Registry from "./Registry.js";
 
 class System {
@@ -162,7 +162,15 @@ class CollisionSystem extends System {
                     eventBus[player.id][GROUNDCOLLISION] = () => {
                         const stateComponent = Registry.getComponent(STATE, player.id);
                         if (stateComponent.currentState && stateComponent.currentState.name === JUMPING) {
-                            eventBus[player.id][TRANSITIONSTATE](new StandingState(), player.id)
+
+                            if (eventBus[player.id][ADDVELOCITYLEFT] || eventBus[player.id][ADDVELOCITYRIGHT] || eventBus[player.id][RUNNING]) {
+                                eventBus[player.id][TRANSITIONSTATE](new RunningState(), player.id)
+
+                            } else {
+
+                                eventBus[player.id][TRANSITIONSTATE](new StandingState(), player.id)
+
+                            }
 
                         }
                     }
@@ -695,6 +703,7 @@ class StateSystem extends System {
             }
 
 
+
         }
     }
 
@@ -722,7 +731,7 @@ class StateSystem extends System {
 
         if (stateComponent.currentState) {
 
-            if (stateComponent.currentState.priority > newState.priority) {
+            if (stateComponent.currentState.priority > newState.priority && newState.priority !== COMBINATION) {
                 return;
             }
 
@@ -731,6 +740,7 @@ class StateSystem extends System {
             // this.currentState.exit()
             stateComponent.prevState = stateComponent.currentState;
         }
+
 
         // this currentSTate.enter()
         stateComponent.currentState = newState;

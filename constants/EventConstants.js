@@ -1,5 +1,5 @@
 const GROUNDCOLLISION = "groundCollision";
+const COMBINATION = "combination";
 
 
-
-export { GROUNDCOLLISION }
+export { GROUNDCOLLISION, COMBINATION }

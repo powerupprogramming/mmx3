@@ -1,5 +1,5 @@
 import Registry from "./classes/Registry.js";
-import { CHANGESTATE, DASHING, DASHINGFRAMES, JUMPING, JUMPINGFRAMES, LEFT, RIGHT, RUNNING, RUNNINGFRAMES, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, DASHING, DASHINGFRAMES, JUMPING, JUMPINGFRAMES, LEFT, RIGHT, RUNNING, RUNNINGFRAMES, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "./constants/AssetConstants.js";
 import { ANIMATION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
 import { GROUNDCOLLISION } from "./constants/EventConstants.js";
@@ -92,14 +92,14 @@ class Game {
         this.player = this.registry.createEntity([p, playerSprite, a, m, c, playerState]);
 
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 50; i++) {
             const xVal = i * 50 + 200;
             const newP = CreatePositionComponent(xVal, 400, 50, 50);
             this.registry.createEntity([newP, s, c]);
         }
 
-        const p2 = CreatePositionComponent(1000, 350, 50, 50);
-        this.registry.createEntity([p2, s, c]);
+        // const p2 = CreatePositionComponent(1000, 350, 50, 50);
+        // this.registry.createEntity([p2, s, c]);
 
         const backgroundSprite = CreateSpriteComponent("./assets/Background/Intro-Stage.png");
         const backgroundPosition = CreatePositionComponent(0, 0, 20000, 5000);
@@ -109,11 +109,11 @@ class Game {
 
 
 
-
     }
 
 
     run = () => {
+        console.log("This event bus: ", this.eventBus[this.player.id])
         let timeToWait = MILLISECONDS_PER_FRAME - (Date.now() - this.millisecondsPreviousFrame);
         if (timeToWait > 0 && timeToWait <= MILLISECONDS_PER_FRAME) {
             setTimeout(() => {
@@ -135,6 +135,9 @@ class Game {
             this.render();
         }
 
+        // Set player state
+
+
 
         requestAnimationFrame(this.run)
     }
@@ -143,7 +146,12 @@ class Game {
 
         if (!this.isPaused) {
 
+
             this.registry.update();
+
+            if (this.eventBus[this.player.id] && this.eventBus[this.player.id][GROUNDCOLLISION]) {
+                delete this.eventBus[this.player.id][GROUNDCOLLISION]
+            }
 
 
             this.registry.getSystem(ANIMATION_SYSTEM).update(this.assets);
@@ -160,7 +168,6 @@ class Game {
             // Clear certain events
             if (this.eventBus[this.player.id][GROUNDCOLLISION]) {
                 this.eventBus[this.player.id][GROUNDCOLLISION]()
-                delete this.eventBus[this.player.id][GROUNDCOLLISION]
             }
 
         }
@@ -189,6 +196,8 @@ class Game {
 
         const { key, type } = e;
 
+        console.log("Key : ", key)
+
         if (this.player) {
             const { id } = this.player;
             const RigidBody = Registry.getComponent(RIGIDBODY, id);
@@ -197,31 +206,57 @@ class Game {
             if (type === "keydown") {
 
                 switch (key) {
-                    case "w": {
+                    case "ArrowUp": {
 
                         break;
                     }
-                    case "a": {
-                        RigidBody.velocity.x = -50;
-                        this.eventBus[id][CHANGESTATE](new RunningState(0), id)
+                    case "ArrowLeft": {
 
                         Animation.direction = LEFT
-                        // State.mainStates.running = 0;
-                        // State.mainStates.standing = null;
+
+
+                        if (this.eventBus[id][GROUNDCOLLISION] && State.currentState && State.currentState.name !== JUMPING && State.currentState.name !== DASHING && State.currentState.name !== ADDVELOCITYLEFT) {
+                            if (!this.eventBus[id][RUNNING]) {
+                                this.eventBus[id][RUNNING] = () => { }
+                            }
+                            this.eventBus[id][CHANGESTATE](new RunningState(0), id)
+                        }
+                        else {
+                            if (!this.eventBus[id][ADDVELOCITYLEFT]) {
+                                RigidBody.velocity.x -= 50;
+
+                            }
+                            this.eventBus[id][ADDVELOCITYLEFT] = () => { }
+                            // this.eventBus[id][CHANGESTATE](new AddVelocityState(), id)
+
+                        }
+
                         break;
                     }
 
-                    case "s": {
+                    case "ArrowDown": {
 
                         break;
                     }
-                    case "d": {
-                        RigidBody.velocity.x = 50;
+                    case "ArrowRight": {
                         Animation.direction = RIGHT
-                        this.eventBus[id][CHANGESTATE](new RunningState(0), id)
-                        // State.currentState = { RUNNING: 0 };
-                        // State.currentState.running = 0;
-                        // State.currentState.standing = null;
+
+
+
+                        if (this.eventBus[id][GROUNDCOLLISION] && State.currentState && State.currentState.name !== JUMPING && State.currentState.name !== DASHING && State.currentState.name !== ADDVELOCITYRIGHT) {
+                            if (!this.eventBus[id][RUNNING]) {
+                                this.eventBus[id][RUNNING] = () => { }
+                            }
+                            this.eventBus[id][CHANGESTATE](new RunningState(0), id)
+                        } else {
+                            if (!this.eventBus[id][ADDVELOCITYRIGHT]) {
+                                RigidBody.velocity.x += 50;
+
+                            }
+                            this.eventBus[id][ADDVELOCITYRIGHT] = () => { }
+                            // this.eventBus[id][CHANGESTATE](new AddVelocityState(), id)
+                        }
+
                         break
                     }
                     case "g": {
@@ -229,15 +264,14 @@ class Game {
                         break;
                     }
                     case "v": {
-                        RigidBody.velocity.x = Animation.direction === LEFT ? -400 : 400
-                        this.eventBus[id][CHANGESTATE](new DashingState(), id)
+                        if (State.currentState && State.currentState.name !== DASHING && !this.eventBus[id][ADDVELOCITYLEFT] && !this.eventBus[id][ADDVELOCITYRIGHT])
+                            this.eventBus[id][CHANGESTATE](new DashingState(), id)
                         break;
                     }
                     case "c": {
 
-                        if (State.currentState && State.currentState.name !== JUMPING) {
+                        if (this.eventBus[id][GROUNDCOLLISION]) {
                             // jump
-                            RigidBody.velocity.y = -300;
                             this.eventBus[id][CHANGESTATE](new JumpingState(), id)
                         }
                         break;
@@ -255,23 +289,35 @@ class Game {
             }
             else if (type === "keyup") {
                 switch (key) {
-                    case "w": {
+                    case "ArrowUp": {
 
                         break;
                     }
-                    case "s": {
+                    case "ArrowDown": {
                         break;
                     }
-                    case "a": {
-                        RigidBody.velocity.x = 0;
+                    case "ArrowLeft": {
+                        if (this.eventBus[id][RUNNING]) {
+                            delete this.eventBus[id][RUNNING]
+                        }
+                        if (this.eventBus[id][ADDVELOCITYLEFT]) {
+                            delete this.eventBus[id][ADDVELOCITYLEFT]
+                        }
+
                         this.eventBus[id][CHANGESTATE](new StandingState(), id)
                         // State.currentState = { STANDING: 0 };
                         // State.currentState.standing = 0;
                         // State.currentState.running = null;
                         break;
                     }
-                    case "d": {
-                        RigidBody.velocity.x = 0;
+                    case "ArrowRight": {
+                        if (this.eventBus[id][RUNNING]) {
+                            delete this.eventBus[id][RUNNING]
+                        }
+                        if (this.eventBus[id][ADDVELOCITYRIGHT]) {
+                            delete this.eventBus[id][ADDVELOCITYRIGHT]
+                        }
+
                         this.eventBus[id][CHANGESTATE](new StandingState(), id)
 
                         // State.currentState.standing = 0;
