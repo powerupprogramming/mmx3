@@ -1,5 +1,5 @@
 import Registry from "../classes/Registry.js"
-import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING, DASHING, CHANGESTATE, ADDVELOCITYLEFT, ADDVELOCITYRIGHT } from "../constants/AnimationComponentConstants.js"
+import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING, DASHING, CHANGESTATE, ADDVELOCITYLEFT, ADDVELOCITYRIGHT, SHOOTING, CHARGING, CHANGESUB } from "../constants/AnimationComponentConstants.js"
 import { ANIMATION, RIGIDBODY, SPRITE, STATE } from "../constants/ComponentConstants.js"
 import { COMBINATION } from "../constants/EventConstants.js";
 
@@ -15,63 +15,89 @@ class MegamanState {
         const animationComponent = Registry.getComponent(ANIMATION, id);
         const stateComponent = Registry.getComponent(STATE, id);
         const rigidbodyComponent = Registry.getComponent(RIGIDBODY, id);
-        const { prevState, currentState } = stateComponent;
-
+        const { prevState, currentState, currentSub } = stateComponent;
 
         if (stateComponent) {
-            switch (stateComponent.currentState.name) {
-                // case ADDVELOCITY: {
 
-                //     if (prevState && prevState.name !== ADDVELOCITY) {
-                //         rigidbodyComponent.velocity.x += animationComponent.direction === LEFT ? -50 : 50;
-                //     }
-                //     break;
-                // }
+            if (currentState) {
+                switch (currentState.name) {
+                    // case ADDVELOCITY: {
 
-                case RUNNING: {
-                    if (currentState.name !== JUMPING && currentState.name !== CLIMBING) {
+                    //     if (prevState && prevState.name !== ADDVELOCITY) {
+                    //         rigidbodyComponent.velocity.x += animationComponent.direction === LEFT ? -50 : 50;
+                    //     }
+                    //     break;
+                    // }
+
+                    case RUNNING: {
+                        if (currentState.name !== JUMPING && currentState.name !== CLIMBING) {
+                            if (animationComponent) {
+                                // Add to it
+                                rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -125 : 125;
+                                animationComponent.mode = RUNNING;
+                            }
+                        }
+
+                        break;
+                    }
+                    case DASHING: {
+
+                        if (animationComponent && prevState && (prevState.name === STANDING || prevState.name === RUNNING)) {
+                            rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -400 : 400
+                            animationComponent.mode = DASHING;
+                        }
+                        break
+                    }
+                    case STANDING: {
+
                         if (animationComponent) {
-                            // Add to it
-                            rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -125 : 125;
-                            animationComponent.mode = RUNNING;
+                            animationComponent.mode = STANDING;
+                        }
+                        break;
+                    }
+                    case JUMPING: {
+
+                        rigidbodyComponent.velocity.y = -300;
+
+                        if (animationComponent) {
+
+                            animationComponent.mode = JUMPING
+
                         }
                     }
-
-                    break;
-                }
-                case DASHING: {
-
-                    if (animationComponent && prevState && (prevState.name === STANDING || prevState.name === RUNNING)) {
-                        rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -400 : 400
-                        animationComponent.mode = DASHING;
+                    default: {
+                        break;
                     }
-                    break
-                }
-                case STANDING: {
-
-                    if (animationComponent) {
-                        animationComponent.mode = STANDING;
-                    }
-                    break;
-                }
-                case JUMPING: {
-
-                    rigidbodyComponent.velocity.y = -300;
-
-                    if (animationComponent) {
-
-                        animationComponent.mode = JUMPING
-
-                    }
-                }
-                default: {
-                    break;
                 }
             }
+
         }
 
     }
 
+    subTransition = (id) => {
+        const animationComponent = Registry.getComponent(ANIMATION, id);
+        const stateComponent = Registry.getComponent(STATE, id);
+        const { currentSub } = stateComponent;
+
+        if (currentSub) {
+            switch (currentSub.name) {
+                case SHOOTING: {
+                    animationComponent.subMode = SHOOTING
+                    break;
+                }
+
+                case CHARGING: {
+                    animationComponent.subMode = CHARGING
+                    break;
+                }
+
+                default: {
+                    break
+                }
+            }
+        }
+    }
 }
 
 
@@ -181,6 +207,40 @@ export class DashingState extends MegamanState {
 
 //     exit = () => { }
 // }
+
+export class ShootingState extends MegamanState {
+    constructor() {
+        super()
+        this.name = SHOOTING
+        this.priority = COMBINATION
+    }
+
+    enter = (id) => {
+        const stateComponent = Registry.getComponent(STATE, id);
+        this.subTransition(id);
+
+    }
+
+    execute = (id, eventBus) => {
+        // create lemons
+        const stateComponent = Registry.getComponent(STATE, id);
+        const animationComponent = Registry.getComponent(ANIMATION, id);
+
+
+
+        // clear state
+        if (Date.now() >= this.startTime + 200) {
+            eventBus[id][CHANGESUB](undefined, id)
+            animationComponent.subMode = null;
+        }
+
+
+    }
+
+    exit = () => {
+
+    }
+}
 
 export class JumpingState extends MegamanState {
     constructor() {

@@ -15,6 +15,9 @@ class StateComponent extends Component {
         this.prevState = componentObj.prevState;
         this.currentState = componentObj.currentState;
         this.priorityCurrentState = componentObj.priorityCurrentState;      // higher the stronger
+
+        this.currentSub = componentObj.currentSub;
+
         this.prevGlobalState = componentObj.prevGlobalState;
         this.globalState = componentObj.globalState;
         // this.possibleStates = componentObj.possibleStates;
@@ -93,6 +96,7 @@ class SpriteComponent extends Component {
         this.sprite = new Image();
         this.sprite.src = componentObj.path;
         this.srcRect = componentObj.srcRect;
+        this.depth = componentObj.depth;
         /*
             {
                 x,
@@ -127,6 +131,7 @@ class AnimationComponent extends Component {
         this.startOfAnimation = Date.now();         // keep
         this.currentTimeOfAnimation = Date.now();   // keep
         this.mode = componentObj.mode;                     // keep - running, standing, attacking, run-attack, jumping
+        this.subMode = componentObj.subMode         // shooting/chargin
         this.direction = componentObj.direction;    // keep
         this.facing = componentObj.facing;          // keep string
         // this.removeOn = componentObj.removeOn;
@@ -174,6 +179,10 @@ class HitboxComponent extends Component {
         super(componentType);
         this.owner = componentObj.owner;            // Link = 1, enemy = 2 , LinkWeapon = 3 , enemyProjectile = 4
         this.damage = componentObj.damage;
+        this.xOffset = componentObj.xOffset;
+        this.yOffset = componentObj.yOffset;
+        this.width = componentObj.width;
+        this.height = componentObj.height
     }
 
 }

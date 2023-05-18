@@ -1,4 +1,4 @@
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, JUMPING, LEFT, RUNNING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, NOSUB, RUNNING, SHOOTING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { COMBINATION, GROUNDCOLLISION } from "../constants/EventConstants.js";
@@ -31,7 +31,11 @@ class MovementSystem extends System {
 
             const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
 
-            sumForces.y = mass * 9.8 * PIXELS_PER_METER;
+            // Only apply to megaman for now
+            if (entity.id === 0) {
+                sumForces.y = mass * 9.8 * PIXELS_PER_METER;
+
+            }
 
             // Integrate the forces 
             acceleration.x = sumForces.x * (1 / mass);
@@ -46,7 +50,7 @@ class MovementSystem extends System {
                 if (Collision.collisionLeft || Collision.collisionRight) {
                     velocity.x = 0;
                     velocity.knockbackX = 0;
-                    Position.x = Position.previousX;
+                    // Position.x = Position.previousX; Jake for wall climb
                 } else {
                     Position.previousX = Position.x;
                 }
@@ -58,12 +62,14 @@ class MovementSystem extends System {
                 } else {
                     Position.previousY = Position.y;
                 }
+
+                Collision.collisionBottom = false;
+                Collision.collisionTop = false;
+                Collision.collisionLeft = false;
+                Collision.collisionRight = false;
             }
 
-            Collision.collisionBottom = false;
-            Collision.collisionTop = false;
-            Collision.collisionLeft = false;
-            Collision.collisionRight = false;
+
 
             // Constant acceleration:
             Position.x = Position.x + ((velocity.x * dt) + (velocity.knockbackX * dt)) + ((acceleration.x * dt * dt) / 2);
@@ -193,6 +199,12 @@ class CollisionSystem extends System {
                     playerRightPoint.y + 1 + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
                     Collision.collisionRight = true;
+
+                    console.log("RIGHT")
+
+                    // If state isn't knocked back , comma cling wall
+
+
                 }
                 if (
                     playerLeftPoint.x < ex + ewidth &&
@@ -354,11 +366,27 @@ class HitboxSystem extends System {
                 const e1 = this.entities[i];
                 const e2 = this.entities[j];
 
-                const { Position: e1Position } = e1.components;
-                const { Position: e2Position } = e2.components;
+                if (e1.id === e2.id) continue;
 
-                const { x: x1, y: y1, width: width1, height: height1 } = e1Position;
-                const { x: x2, y: y2, width: width2, height: height2 } = e2Position;
+
+                let { x: x1, y: y1, width: width1, height: height1 } = Registry.getComponent(POSITION, e1.id);;
+                let { x: x2, y: y2, width: width2, height: height2 } = Registry.getComponent(POSITION, e2.id);
+
+                const { xOffset: xOffset1, yOffset: yOffset1, width: hitboxWidth1, height: hitboxHeight1 } = Registry.getComponent(HITBOX, e1.id)
+                const { xOffset: xOffset2, yOffset: yOffset2, width: hitboxWidth2, height: hitboxHeight2 } = Registry.getComponent(HITBOX, e2.id)
+
+
+
+                x1 += xOffset1;
+                y1 += yOffset1
+                width1 += hitboxWidth1
+                height1 += hitboxHeight1
+
+                x2 += xOffset2
+                y2 += yOffset2
+                width2 += hitboxWidth2
+                height2 += hitboxHeight2
+
 
 
                 if (
@@ -368,124 +396,7 @@ class HitboxSystem extends System {
                     y1 + height1 > y2
                 ) {
 
-                    const { Hitbox: hitbox1 } = e1.components;
-                    const { Hitbox: hitbox2 } = e2.components;
-                    let kbReceiver = undefined;
-                    let kbSender = undefined;
-
-                    // If hitbox1 owner is linkweapon, and hitbox2 owner is enemy
-                    // If hitbox1 owner is enem7, and hitbox2 owner is link weapon
-                    if (
-                        (hitbox1.owner === 3 && hitbox2.owner === 2)
-                        ||
-                        (hitbox1.owner === 2 && hitbox2.owner === 3)
-                    ) {
-                        // If link's sword overlaps with the enemy, do damage to enemy
-                        const linkAttack = hitbox1.owner === 3 ? e1 : e2;
-                        const enemy = hitbox1.owner === 2 ? e1 : e2;
-
-
-
-                        const { damage } = linkAttack.components["Hitbox"]
-
-                        if (damage) {
-
-                            const { invulnerableTime } = enemy.components["Health"];
-
-                            if (invulnerableTime === 0) {
-                                // Do damage
-                                enemy.components["Health"].remainingHealth -= damage;
-                                enemy.components["Health"].invulnerableTime = Date.now() + 1000; // We will be handling this later
-
-                                // Apply Knockback
-                                kbReceiver = enemy;
-                                kbSender = linkAttack;
-                                new Audio("../assets/audio/enemyHurt.mp3").play();
-
-
-                            }
-
-
-                        }
-
-                    }
-                    // If enemy overlaps with Link, do damage to link
-                    // If enemy projectile overlaps with Link, we'll do damage to link
-                    else if (
-                        (hitbox1.owner === 1 && hitbox2.owner % 2 === 0)
-                        ||
-                        (hitbox1.owner % 2 === 0 && hitbox2.owner === 1)
-                    ) {
-                        // If link's sword overlaps with the enemy, do damage to enemy
-                        const link = hitbox1.owner === 1 ? e1 : e2;
-                        const enemy = hitbox1.owner === 1 ? e2 : e1;            // enemy or enemyProjectil
-
-                        const { damage } = enemy.components["Hitbox"]
-
-                        if (damage) {
-
-                            const { invulnerableTime } = link.components["Health"];
-
-                            if (invulnerableTime === 0) {
-                                // Do damage
-                                link.components["Health"].remainingHealth -= damage;
-                                link.components["Health"].invulnerableTime = Date.now() + 1000;
-
-                                kbReceiver = link;
-                                kbSender = enemy;
-                                new Audio("../assets/audio/linkHurt.mp3").play();
-
-                            }
-
-
-                        }
-
-
-                    }
-
-
-                    if (kbReceiver && kbSender) {
-                        const receiverCenterX = kbReceiver.components["Position"].x - (kbReceiver.components["Position"].width / 2);
-                        const receiverCenterY = kbReceiver.components["Position"].y - (kbReceiver.components["Position"].height / 2);
-
-                        const senderCenterX = kbSender.components["Position"].x - (kbSender.components["Position"].width / 2);
-                        const senderCenterY = kbSender.components["Position"].y - (kbSender.components["Position"].height / 2);
-
-                        let differenceX = senderCenterX - receiverCenterX;
-                        let differenceY = senderCenterY - receiverCenterY;
-
-                        let absoluteDiffX = differenceX < 0 ? differenceX * -1 : differenceX;
-                        let absoluteDiffY = differenceY < 0 ? differenceY * -1 : differenceY;
-
-                        let side = undefined;
-
-                        // Whatever is greater will determine the axis that collision occurred on.
-                        if (absoluteDiffX > absoluteDiffY) {
-                            // It is either left or right
-                            if (differenceX < 0) {
-                                side = "right"
-                                // Apply knock back 
-                                kbReceiver.components["Movement"].knockbackVx = 10
-                            } else {
-                                side = "left"
-                                kbReceiver.components["Movement"].knockbackVx = -10;
-                            }
-                        }
-                        else {
-                            // It is either top or bottom
-
-                            if (differenceY < 0) {
-                                side = "top";
-                                kbReceiver.components["Movement"].knockbackVy = 10;
-                            } else {
-                                side = "bottom";
-                                kbReceiver.components["Movement"].knockbackVy = -10;
-                            }
-                        }
-
-
-                    }
-
+                    console.log("collision occuring")
 
                 }
 
@@ -563,25 +474,28 @@ class RenderSystem extends System {
             }
 
             const { x, y, width, height } = Position;
-            const { srcRect, sprite } = Sprite;
+            const { srcRect, sprite, depth } = Sprite;
 
             c.beginPath();
 
-            if (srcRect) {
 
-                c.globalCompositeOperation = "source-over"
+            if (depth === "background") {
+
+                c.globalCompositeOperation = "destination-over"
                 // c.imageSmoothingEnabled = true;
                 // c.imageSmoothingQuality = "high";
-                const { x: sx, y: sy, width: sw, height: sh } = srcRect;
+                // const { x: sx, y: sy, width: sw, height: sh } = srcRect;
 
-                c.drawImage(sprite, sx, sy, sw, sh, x, y, width, height);
+                // c.drawImage(sprite, sx, sy, sw, sh, x, y, width, height);
+                c.drawImage(sprite, x, y, width, height);
+
             }
             else {
 
 
                 c.imageSmoothingEnabled = true;
                 c.imageSmoothingQuality = "high";
-                c.globalCompositeOperation = "destination-over"
+                c.globalCompositeOperation = "source-over"
                 c.drawImage(sprite, x, y, width, height)
 
 
@@ -609,7 +523,7 @@ class RenderSystem extends System {
 
                 }
 
-                if (entity.registry.getComponent(HITBOX, entity.id)) {
+                if (Registry.getComponent(HITBOX, entity.id)) {
 
                     c.beginPath();
                     c.rect(x, y, width, height);
@@ -642,7 +556,7 @@ class AnimationSystem extends System {
             const entity = this.entities[i];
 
             const Animation = Registry.getComponent(ANIMATION, entity.id);
-            const { mode, direction, currentFrame, startOfAnimation } = Animation;
+            const { mode, direction, currentFrame, startOfAnimation, subMode } = Animation;
             const { animationLength, hold } = Animation.frames[mode];
 
 
@@ -651,14 +565,27 @@ class AnimationSystem extends System {
             if (currentFrame === hold) {
 
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
-                Sprite.sprite = assets[MEGAMAN][mode][direction][currentFrame];
+                if (subMode) {
+
+                    Sprite.sprite = assets[MEGAMAN][subMode][mode][direction][currentFrame];
+                }
+                else {
+                    Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][currentFrame];
+
+                }
 
             } else {
                 const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
 
                 const Sprite = Registry.getComponent(SPRITE, entity.id);
 
-                Sprite.sprite = assets[MEGAMAN][mode][direction][nextFrame]
+                if (subMode === SHOOTING) {
+                    Sprite.sprite = assets[MEGAMAN][SHOOTING][mode][direction][nextFrame]
+
+                }
+                else {
+                    Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][nextFrame]
+                }
 
                 Animation.currentFrame = nextFrame;
             }
@@ -692,6 +619,9 @@ class StateSystem extends System {
                 eventBus[id][TRANSITIONSTATE] = this.transitionState;
             }
 
+            if (!eventBus[id][CHANGESUB]) {
+                eventBus[id][CHANGESUB] = this.changeSub;
+            }
 
 
             const stateComponent = Registry.getComponent(STATE, id);
@@ -700,6 +630,10 @@ class StateSystem extends System {
 
                 stateComponent.currentState.execute(id, eventBus);
 
+            }
+
+            if (stateComponent.currentSub) {
+                stateComponent.currentSub.execute(id, eventBus)
             }
 
 
@@ -745,6 +679,37 @@ class StateSystem extends System {
         // this currentSTate.enter()
         stateComponent.currentState = newState;
         stateComponent.currentState.enter(id);
+
+    }
+
+    changeSub = (newState, id) => {
+        const stateComponent = Registry.getComponent(STATE, id);
+
+
+        if (stateComponent && stateComponent.currentSub) {
+
+            // if (stateComponent.currentSub.priority > newState.priority && newState.priority !== COMBINATION) {
+            //     return;
+            // }
+
+
+
+            // this.currentSub.exit()
+            // stateComponent.prevState = stateComponent.currentSub;
+        }
+
+
+        // this currentSub.enter()
+        if (stateComponent) {
+            stateComponent.currentSub = newState;
+            if (stateComponent.currentSub)
+                stateComponent.currentSub.enter(id);
+
+
+            console.log("state component current sub 5: ", stateComponent.currentSub)
+
+        }
+
 
     }
 

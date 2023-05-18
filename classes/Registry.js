@@ -296,6 +296,7 @@ class Registry {
     // entity : Entity
     addEntityToSystem = (entity) => {
 
+
         Object.values(this.systems).forEach((system) => {
             let addToSystem = true;
 

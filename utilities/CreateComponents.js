@@ -1,5 +1,5 @@
 import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES } from "../constants/AnimationComponentConstants.js";
-import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE } from "../constants/ComponentConstants.js";
+import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE, HITBOX } from "../constants/ComponentConstants.js";
 
 // x: number, y : number, width: number: height: number
 // return dummyPosition
@@ -15,14 +15,30 @@ const CreatePositionComponent = (x, y, width, height) => {
 }
 
 
+const CreateHitboxComponent = (xOffset, yOffset, width, height) => {
+    const d = {
+        name: HITBOX,
+        value: {
+            xOffset,
+            yOffset,
+            width,
+            height
+        }
+    }
+
+    return d;
+}
+
+
 // path: string, srcRect: {x: number, y: number, width: number, height number}
 // return dummySprite
-const CreateSpriteComponent = (path, srcRect) => {
+const CreateSpriteComponent = (path, srcRect, depth) => {
     const d = {
         name: SPRITE,
         value: {
             path,
-            srcRect
+            srcRect,
+            depth
         }
     }
     return d;
@@ -99,21 +115,6 @@ const CreateMegamanXStateComponent = () => {
     const d = {
         name: STATE,
         value: {
-            // mainStates: {
-            //     [STANDING]: null,       // null = not used, 0/1/2/3/etc is frame
-            //     [RUNNING]: null,
-            //     [CLIMBING]: null,
-            //     [JUMPING]: null
-            // },
-            // combinationStates: {
-            //     [SHOOTING]: false,
-            //     [CHARGING]: false
-            // },
-            // pureTransitions: {
-            //     [KNOCKEDBACK]: PREVSTATE,
-            //     [LANDING]: STANDING
-            // }
-
             holdCurrentState: false,
             prevState: undefined,
             currentState: undefined,
@@ -121,26 +122,11 @@ const CreateMegamanXStateComponent = () => {
 
             prevGlobalState: undefined,
             globalState: undefined,
-            // possibleStates: {
-            //     mainStates: {
-            //         [STANDING]: null,       // null = not used, 0/1/2/3/etc is frame
-            //         [RUNNING]: null,
-            //         [CLIMBING]: null,
-            //         [JUMPING]: null
-            //     },
-            //     combinationStates: {
-            //         [SHOOTING]: false,
-            //         [CHARGING]: false
-            //     },
-            //     pureTransitions: {
-            //         [KNOCKEDBACK]: [PREVSTATE],
-            //         [LANDING]: [STANDING]
-            //     }
-            // }
+
         }
     }
     return d;
 }
 
 
-export { CreatePositionComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent, CreateMegamanXStateComponent }
+export { CreatePositionComponent, CreateHitboxComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent, CreateMegamanXStateComponent }
