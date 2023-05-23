@@ -1,5 +1,9 @@
 const GROUNDCOLLISION = "groundCollision";
+const RIGHTKEYDOWN = "rightKeyDown";
+const LEFTKEYDOWN = "leftKeyDown";
 const COMBINATION = "combination";
+const RIGHTWALLCOLLISION = 'rightWallCollision'
+const LEFTWALLCOLLISION = "leftWallCollision"
 
 
-export { GROUNDCOLLISION, COMBINATION }
+export { GROUNDCOLLISION, COMBINATION, RIGHTKEYDOWN, LEFTKEYDOWN, RIGHTWALLCOLLISION, LEFTWALLCOLLISION }

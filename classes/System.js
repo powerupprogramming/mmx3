@@ -1,7 +1,7 @@
 import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, NOSUB, RUNNING, SHOOTING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
-import { COMBINATION, GROUNDCOLLISION } from "../constants/EventConstants.js";
+import { COMBINATION, GROUNDCOLLISION, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
 import { RunningState, StandingState } from "../states/MegamanStates.js";
 import Registry from "./Registry.js";
@@ -20,7 +20,7 @@ class MovementSystem extends System {
         this.componentRequirements = [RIGIDBODY, POSITION];
     }
 
-    update = (dt) => {
+    update = (dt, eventBus) => {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
 
@@ -33,13 +33,20 @@ class MovementSystem extends System {
 
             // Only apply to megaman for now
             if (entity.id === 0) {
-                sumForces.y = mass * 9.8 * PIXELS_PER_METER;
+                sumForces.y += mass * 9.8 * PIXELS_PER_METER;
+
+
 
             }
+
+
 
             // Integrate the forces 
             acceleration.x = sumForces.x * (1 / mass);
             acceleration.y = sumForces.y * (1 / mass);
+
+            // if (entity.id === 0) console.log("Acceleration ", acceleration.y)
+
 
             // Integrate acceleration into velocity
             velocity.x += acceleration.x * dt;
@@ -66,7 +73,22 @@ class MovementSystem extends System {
                 Collision.collisionBottom = false;
                 Collision.collisionTop = false;
                 Collision.collisionLeft = false;
-                Collision.collisionRight = false;
+
+                if (entity.id === 0) {
+                    if (eventBus[entity.id] && eventBus[entity.id][RIGHTKEYDOWN] && eventBus[entity.id][RIGHTWALLCOLLISION] && !eventBus[entity.id][GROUNDCOLLISION]) {
+                        // console.log("HERE")
+                        Collision.collisionRight = true;
+                    } else {
+                        Collision.collisionRight = false
+                    }
+                } else {
+                    Collision.collisionBottom = false;
+                    Collision.collisionTop = false;
+                    Collision.collisionLeft = false;
+                    Collision.collisionRight = false
+
+                }
+
             }
 
 
@@ -95,28 +117,8 @@ class MovementSystem extends System {
 
 
 
-            // if (Animation) {
-            //     if (RigidBody.vX > 0) {
-            //         Animation.facing = "right"
-            //     }
-            //     if (RigidBody.vX < 0) {
-            //         Animation.facing = "left"
-            //     }
+            sumForces.y = 0;
 
-            //     if (RigidBody.vY < 0) {
-            //         Animation.facing = "up";
-            //     }
-
-            //     if (RigidBody.vY > 0) {
-            //         Animation.facing = "down";
-            //     }
-            //     // TODO: put into user input
-            //     if (RigidBody.vX || RigidBody.vY) {
-            //         Animation.shouldAnimate = true
-            //     } else {
-            //         Animation.shouldAnimate = false
-            //     }
-            // }
         }
     }
 }
@@ -200,9 +202,8 @@ class CollisionSystem extends System {
                 ) {
                     Collision.collisionRight = true;
 
-                    console.log("RIGHT")
-
                     // If state isn't knocked back , comma cling wall
+                    eventBus[player.id][RIGHTWALLCOLLISION] = () => { }
 
 
                 }
@@ -213,6 +214,10 @@ class CollisionSystem extends System {
                     playerLeftPoint.y + 1 + (velocity.y * deltaTime) + velocity.knockbackY > ey
                 ) {
                     Collision.collisionLeft = true;
+
+                    console.log("LEFT")
+
+                    eventBus[player.id][LEFTWALLCOLLISION] = () => { }
                 }
 
 
@@ -396,7 +401,6 @@ class HitboxSystem extends System {
                     y1 + height1 > y2
                 ) {
 
-                    console.log("collision occuring")
 
                 }
 

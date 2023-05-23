@@ -3,7 +3,7 @@ import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, DASHING, DAS
 import { MEGAMAN } from "./constants/AssetConstants.js";
 import { SPRITE } from "./constants/ComponentConstants.js";
 import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
-import { GROUNDCOLLISION } from "./constants/EventConstants.js";
+import { GROUNDCOLLISION, LEFTKEYDOWN, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
 import { DashingState, JumpingState, RunningState, ShootingState, StandingState } from "./states/MegamanStates.js";
 import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent, CreateHitboxComponent } from "./utilities/CreateComponents.js";
@@ -198,12 +198,23 @@ class Game {
                     delete this.eventBus[this.player.id][CHANGESUB]
                 }
 
+                if (this.eventBus[this.player.id][RIGHTWALLCOLLISION] && !this.eventBus[RIGHTKEYDOWN]) {
+                    delete this.eventBus[this.player.id][RIGHTWALLCOLLISION]
+                }
+
+                if (this.eventBus[this.player.id][LEFTWALLCOLLISION] && !this.eventBus[LEFTKEYDOWN]) {
+                    delete this.eventBus[this.player.id][LEFTWALLCOLLISION]
+                }
+
             }
 
 
             this.registry.getSystem(ANIMATION_SYSTEM).update(this.assets);
             this.registry.getSystem(COLLISION_SYSTEM).update(this.player, this.eventBus, this.deltaTime)
-            this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime)
+
+            if (this.eventBus[this.player.id] && !this.eventBus[this.player.id][GROUNDCOLLISION] && this.eventBus[this.player.id][RIGHTWALLCOLLISION]) console.log(this.eventBus[this.player.id])
+
+            this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus)
             this.registry.getSystem(HITBOX_SYSTEM).update();
             this.registry.getSystem(HEALTH_SYSTEM).update(this.registry);
             this.registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
@@ -220,6 +231,20 @@ class Game {
             if (this.eventBus[this.player.id][CHANGESUB]) {
                 this.eventBus[this.player.id][CHANGESUB]()
             }
+
+            if (this.eventBus[this.player.id][RIGHTKEYDOWN] && this.eventBus[this.player.id][RIGHTWALLCOLLISION] && !this.eventBus[this.player.id][GROUNDCOLLISION]) {
+                // do wall
+                const rigidBody = Registry.getComponent(RIGIDBODY, this.player.id);
+
+                rigidBody.sumForces.y += rigidBody.mass * -10.8 * PIXELS_PER_METER;
+
+
+                console.log(rigidBody.sumForces)
+
+            }
+
+
+
 
         }
 
@@ -265,6 +290,9 @@ class Game {
 
                         Animation.direction = LEFT
 
+                        this.eventBus[id][LEFTKEYDOWN] = () => { }
+
+
 
                         if (this.eventBus[id][GROUNDCOLLISION] && State.currentState && State.currentState.name !== JUMPING && State.currentState.name !== DASHING && State.currentState.name !== ADDVELOCITYLEFT) {
                             if (!this.eventBus[id][RUNNING]) {
@@ -293,6 +321,7 @@ class Game {
                         Animation.direction = RIGHT
 
 
+                        this.eventBus[id][RIGHTKEYDOWN] = () => { }
 
                         if (this.eventBus[id][GROUNDCOLLISION] && State.currentState && State.currentState.name !== JUMPING && State.currentState.name !== DASHING && State.currentState.name !== ADDVELOCITYRIGHT) {
                             if (!this.eventBus[id][RUNNING]) {
@@ -378,6 +407,11 @@ class Game {
                         break;
                     }
                     case "ArrowLeft": {
+
+                        if (this.eventBus[id][LEFTKEYDOWN]) {
+                            delete this.eventBus[id][LEFTKEYDOWN];
+                        }
+
                         if (this.eventBus[id][RUNNING]) {
                             delete this.eventBus[id][RUNNING]
                         }
@@ -392,6 +426,11 @@ class Game {
                         break;
                     }
                     case "ArrowRight": {
+
+                        if (this.eventBus[id][RIGHTKEYDOWN]) {
+                            delete this.eventBus[id][RIGHTKEYDOWN];
+                        }
+
                         if (this.eventBus[id][RUNNING]) {
                             delete this.eventBus[id][RUNNING]
                         }
