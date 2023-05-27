@@ -653,9 +653,19 @@ class StateSystem extends System {
         this.componentRequirements = [STATE]
     }
 
+    initialize = (eventBus) => {
+        eventBus[0][CHANGESTATE] = this.changeState;
+        eventBus[0][TRANSITIONSTATE] = this.transitionState;
+        eventBus[0][CHANGESUB] = this.changeSub;
+
+    }
+
     update = (eventBus) => {
+
         for (let i = 0; i < this.entities.length; i++) {
             const id = this.entities[i].id;
+
+
 
             if (eventBus[id] === undefined) {
                 eventBus[id] = {};

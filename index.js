@@ -6,7 +6,7 @@ import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentCons
 import { CHARGING, GROUNDCOLLISION, LEFTKEYDOWN, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
 import { ChargingState, DashingState, JumpingState, RunningState, ShootingState, StandingState } from "./states/MegamanStates.js";
-import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent, CreateHitboxComponent } from "./utilities/CreateComponents.js";
+import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent, CreateHitboxComponent, CreateBusterShotAnimationComponent } from "./utilities/CreateComponents.js";
 
 
 export const canvas = document.createElement("canvas");
@@ -31,7 +31,6 @@ class Game {
         this.player = undefined;
         this.registry = new Registry();
         this.gameTime = Date.now();
-
         this.isDebug = false;
         this.eventBus = { a: { aa: 1 } };           // { a: {} }
         this.audioObject = undefined;
@@ -125,11 +124,20 @@ class Game {
         const c = CreateCollisionComponent();
 
         const playerSprite = CreateSpriteComponent();
-        const playerState = CreateMegamanXStateComponent();
+        let playerState = CreateMegamanXStateComponent();
+
 
 
 
         this.player = this.registry.createEntity([p, playerSprite, a, m, c, playerState]);
+
+
+        // Set player initial state
+        this.eventBus[this.player.id] = {}
+        // Set up eventBus, run update once to set up eventbus
+        Registry.getSystem(STATE_SYSTEM).initialize(this.eventBus)
+        this.eventBus[this.player.id][CHANGESTATE](new JumpingState(0), this.player.id)
+
 
         let cityScapePosition = CreatePositionComponent(0, -600, 1000, 1000)
         const cityScapeSprite = CreateSpriteComponent('./assets/Background/city-scape-background.png', undefined, "background")
@@ -290,6 +298,8 @@ class Game {
      
         */
 
+
+
         const { key, type } = e;
 
 
@@ -381,6 +391,7 @@ class Game {
                         break;
                     }
                     case "f": {
+
                         if (State.currentSub === undefined) {
                             this.eventBus[id][CHANGESUB](new ChargingState(), id)
                         }
@@ -400,7 +411,49 @@ class Game {
                     case "f": {
                         if (State.currentSub === undefined || (State.currentSub && State.currentSub.name !== SHOOTING)) {
                             // Create shot
-                            console.log("key up")
+                            const State = Registry.getComponent(STATE, this.player.id);
+
+                            let shotId, x, assetPath, hitbox, rigid, sprite, position, animation;
+
+                            if (Animation.direction === LEFT) {
+                                x = Position.x
+                            } else {
+                                x = Position.x + Position.width - 10
+                            }
+
+                            if (Date.now() <= State.currentSub.startTime + 1000) {
+                                shotId = 0;
+                                assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
+
+                                hitbox = CreateHitboxComponent(0, 0, 20, 20)
+                                rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
+                                sprite = CreateSpriteComponent(assetPath);
+                                position = CreatePositionComponent(Animation.direction === LEFT ? x : x - 10, Position.y + (Position.height / 2 - 10), 20, 20)
+                                animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+                            } else if (Date.now() >= State.currentSub.startTime + 1000 && Date.now() <= State.currentSub.startTime + 2000) {
+                                shotId = 1
+                                assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
+
+                                hitbox = CreateHitboxComponent(0, 0, 20, 20)
+                                rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
+                                sprite = CreateSpriteComponent(assetPath);
+                                position = CreatePositionComponent(Animation.direction === LEFT ? x - 37 : x - 8, Position.y + (Position.height / 3) - 5, 50, 50)
+                                animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+                            } else {
+                                shotId = 2;
+                                assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
+
+                                hitbox = CreateHitboxComponent(0, 0, 100, 100)
+                                rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
+                                sprite = CreateSpriteComponent(assetPath);
+                                position = CreatePositionComponent(Animation.direction === LEFT ? x - 35 : x - 10, Position.y, 100, 100)
+                                animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+                            }
+
+
+
+                            const shot = this.registry.createEntity([hitbox, rigid, sprite, position, animation]);
+
 
                             this.eventBus[id][CHANGESUB](new ShootingState(), id)
                         }
