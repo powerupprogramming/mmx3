@@ -10,10 +10,10 @@ import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HITBOX_SYSTEM, M
 class Registry {
 
     static componentEntityMapping = {}
+    static systems = {}               // object { name (string) : RenderSystem,VelocitySystem, etc (string) }
 
     constructor() {
         this.numberOfEntities = 0;
-        this.systems = {}               // object { name (string) : RenderSystem,VelocitySystem, etc (string) }
         this.entitiesToBeAdded = [];    // entities[]
         this.entitiesToBeKilled = []    // entities[]
         /*
@@ -43,7 +43,7 @@ class Registry {
             // remove entities from systenm
             // Go through each component it has
 
-            for (let system of Object.values(this.systems)) {
+            for (let system of Object.values(Registry.systems)) {
 
 
                 for (let i = 0; i < system.entities.length; i++) {
@@ -79,6 +79,7 @@ class Registry {
     createEntity = (components) => {
         const newEntity = new Entity(this.numberOfEntities, this);
         for (let i = 0; i < components.length; i++) {
+
             const component = components[i];
             this.addComponentToEntity(component)
         }
@@ -94,7 +95,8 @@ class Registry {
             const animationComponent = Registry.getComponent(ANIMATION, newEntity.id);
             if (animationComponent) {
                 const { mode, direction } = animationComponent;
-                spriteComponent.sprite.src = `../assets/MegamanX/${mode}/${direction}/0.png`.toLowerCase()
+                if (mode)
+                    spriteComponent.sprite.src = `../assets/MegamanX/${mode}/${direction}/0.png`.toLowerCase()
             }
         }
 
@@ -151,7 +153,7 @@ class Registry {
                 break;
             }
         }
-        this.systems[systemType] = newSystem;
+        Registry.systems[systemType] = newSystem;
     }
 
 
@@ -184,6 +186,7 @@ class Registry {
                 Registry.componentEntityMapping[SPRITE][this.numberOfEntities] = new SpriteComponent(SPRITE, componentObj);
 
 
+                console.log("HERE WITH NEW COMPONENT", Registry.componentEntityMapping[SPRITE][this.numberOfEntities])
 
                 break;
             }
@@ -297,7 +300,7 @@ class Registry {
     addEntityToSystem = (entity) => {
 
 
-        Object.values(this.systems).forEach((system) => {
+        Object.values(Registry.systems).forEach((system) => {
             let addToSystem = true;
 
             const componentRequirements = system["componentRequirements"];
@@ -320,8 +323,8 @@ class Registry {
     // 5
     // returns System
     // systemType: string
-    getSystem = (systemType) => {
-        return this.systems[systemType];
+    static getSystem = (systemType) => {
+        return Registry.systems[systemType];
     }
 
     static getComponent = (componentType, entityId) => {
@@ -337,7 +340,7 @@ class Registry {
 
 
     removeAllEntities = () => {
-        Object.values(this.systems).forEach((system) => {
+        Object.values(Registry.systems).forEach((system) => {
             system.removeAllEntities();
         })
     }

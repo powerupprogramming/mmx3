@@ -1,4 +1,4 @@
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, NOSUB, RUNNING, SHOOTING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, LEVEL2BUSTER, NOSUB, PROJECTILES, RUNNING, SHOOTING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { COMBINATION, GROUNDCOLLISION, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "../constants/EventConstants.js";
@@ -500,6 +500,7 @@ class RenderSystem extends System {
                 c.imageSmoothingEnabled = true;
                 c.imageSmoothingQuality = "high";
                 c.globalCompositeOperation = "source-over"
+
                 c.drawImage(sprite, x, y, width, height)
 
 
@@ -560,15 +561,22 @@ class AnimationSystem extends System {
             const entity = this.entities[i];
 
             const Animation = Registry.getComponent(ANIMATION, entity.id);
-            const { mode, direction, currentFrame, startOfAnimation, subMode } = Animation;
-            const { animationLength, hold } = Animation.frames[mode];
+            const { mode, direction, currentFrame, startOfAnimation, subMode, alternatingFrameRange } = Animation;
+            let animationLength, hold;
+            if (mode) {
+                animationLength = Animation.frames[mode].animationLength;
+                hold = Animation.frames[mode].hold;
+            } else {
+                animationLength = Animation.frames.animationLength
+            }
 
 
-            const numOfFrames = Animation.frames[mode][direction];
+            const numOfFrames = mode ? Animation.frames[mode][direction] : Animation.frames.numFrames;
+            const Sprite = Registry.getComponent(SPRITE, entity.id);
 
             if (currentFrame === hold) {
 
-                const Sprite = Registry.getComponent(SPRITE, entity.id);
+
                 if (subMode) {
 
                     Sprite.sprite = assets[MEGAMAN][subMode][mode][direction][currentFrame];
@@ -578,16 +586,54 @@ class AnimationSystem extends System {
 
                 }
 
-            } else {
+            }
+            else if (alternatingFrameRange && currentFrame >= alternatingFrameRange[0]) {
+
+
+
+                // Clamp animation speed
+                if (Animation.currentTimeOfAnimation + 50 > Date.now()) continue;
+
+
+                // Since must be projectile, num of frames equals type since type is just a number
+
+                if (currentFrame === alternatingFrameRange[0]) {
+                    Animation.currentFrame += 1;
+                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][alternatingFrameRange[0]]
+                }
+                // if it is less than max
+                else if (currentFrame <= alternatingFrameRange[1]) {
+                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][Animation.currentFrame]
+                    Animation.currentFrame += 1;
+
+                }
+
+                // if greater than final frame, set to range[0]
+                else if (currentFrame > alternatingFrameRange[1]) {
+                    // loop around
+                    Animation.currentFrame = alternatingFrameRange[0]
+                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][Animation.currentFrame]
+                }
+
+
+
+            }
+            else {
                 const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
 
-                const Sprite = Registry.getComponent(SPRITE, entity.id);
+                // Must be projectile if no mode
+                if (mode === undefined) {
+                    // Clamp animation speed
+                    if (Animation.currentTimeOfAnimation + 50 > Date.now()) continue;
 
+                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][nextFrame];
+                }
                 if (subMode === SHOOTING) {
                     Sprite.sprite = assets[MEGAMAN][SHOOTING][mode][direction][nextFrame]
 
                 }
-                else {
+                else if (mode && direction) {
+
                     Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][nextFrame]
                 }
 
@@ -696,9 +742,7 @@ class StateSystem extends System {
             //     return;
             // }
 
-
-
-            // this.currentSub.exit()
+            stateComponent.currentSub.exit(id)
             // stateComponent.prevState = stateComponent.currentSub;
         }
 
@@ -709,8 +753,6 @@ class StateSystem extends System {
             if (stateComponent.currentSub)
                 stateComponent.currentSub.enter(id);
 
-
-            console.log("state component current sub 5: ", stateComponent.currentSub)
 
         }
 

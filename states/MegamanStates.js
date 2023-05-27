@@ -1,7 +1,9 @@
 import Registry from "../classes/Registry.js"
 import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING, DASHING, CHANGESTATE, ADDVELOCITYLEFT, ADDVELOCITYRIGHT, SHOOTING, CHARGING, CHANGESUB } from "../constants/AnimationComponentConstants.js"
-import { ANIMATION, RIGIDBODY, SPRITE, STATE } from "../constants/ComponentConstants.js"
+import { ANIMATION, POSITION, RIGIDBODY, SPRITE, STATE } from "../constants/ComponentConstants.js"
 import { COMBINATION } from "../constants/EventConstants.js";
+import { MOVEMENT_SYSTEM, RENDER_SYSTEM } from "../constants/SystemConstants.js";
+import { CreateAnimationComponent, CreateBusterShotAnimationComponent, CreateHitboxComponent, CreatePositionComponent, CreateRigidbodyComponent, CreateSpriteComponent } from "../utilities/CreateComponents.js";
 
 
 
@@ -88,7 +90,7 @@ class MegamanState {
                 }
 
                 case CHARGING: {
-                    animationComponent.subMode = CHARGING
+                    // animationComponent.subMode = CHARGING
                     break;
                 }
 
@@ -241,6 +243,90 @@ export class ShootingState extends MegamanState {
 
     }
 }
+
+export class ChargingState extends MegamanState {
+
+    constructor() {
+        super()
+        this.name = CHARGING
+        this.priority = COMBINATION
+    }
+
+    enter = (id) => {
+        const State = Registry.getComponent(STATE, id)
+        const { currentSub } = State
+
+        this.startTime = Date.now()
+        this.subTransition(id);
+
+    }
+
+    execute = (id) => {
+
+    }
+
+    exit = (id) => {
+        const Animation = Registry.getComponent(ANIMATION, id)
+        const Position = Registry.getComponent(POSITION, id)
+
+        let shotId, x, assetPath, hitbox, rigid, sprite, position, animation;
+
+        if (Animation.direction === LEFT) {
+            x = Position.x
+        } else {
+            x = Position.x + Position.width - 10
+        }
+
+        if (Date.now() <= this.startTime + 1000) {
+            shotId = 0;
+            assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
+
+            hitbox = CreateHitboxComponent(0, 0, 20, 20)
+            rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
+            sprite = CreateSpriteComponent(assetPath);
+            position = CreatePositionComponent(Animation.direction === LEFT ? x : x - 10, Position.y + (Position.height / 2 - 10), 20, 20)
+            animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+        } else if (Date.now() >= this.startTime + 1000 && Date.now() <= this.startTime + 2000) {
+            shotId = 1
+            assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
+
+            hitbox = CreateHitboxComponent(0, 0, 20, 20)
+            rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
+            sprite = CreateSpriteComponent(assetPath);
+            position = CreatePositionComponent(Animation.direction === LEFT ? x - 37 : x - 8, Position.y + (Position.height / 3) - 5, 50, 50)
+            animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+        } else {
+            shotId = 2;
+            assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
+
+            hitbox = CreateHitboxComponent(0, 0, 100, 100)
+            rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
+            sprite = CreateSpriteComponent(assetPath);
+            position = CreatePositionComponent(Animation.direction === LEFT ? x - 35 : x - 10, Position.y, 100, 100)
+            animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+        }
+
+
+
+
+
+        // Get any system in order to get entity to get Registry value
+        const RenderSystem = Registry.getSystem(RENDER_SYSTEM);
+        const { registry } = RenderSystem.entities[0];
+
+        if (registry) {
+            const e = registry.createEntity([hitbox, rigid, sprite, position, animation]);
+
+        }
+    }
+
+
+}
+
+
+
+
+
 
 export class JumpingState extends MegamanState {
     constructor() {

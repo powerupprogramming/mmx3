@@ -113,6 +113,7 @@ class AnimationComponent extends Component {
         super(componentType);
         this.isStatic = componentObj.isStatic;          // keep
         this.frames = componentObj.frames;              // keep
+        this.alternatingFrameRange = componentObj.alternatingFrameRange;
         /*
             {
                 running: {

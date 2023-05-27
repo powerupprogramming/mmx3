@@ -1,11 +1,11 @@
 import Registry from "./classes/Registry.js";
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, DASHING, DASHINGFRAMES, JUMPING, JUMPINGFRAMES, LEFT, NOSUB, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, DASHING, DASHINGFRAMES, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
 import { MEGAMAN } from "./constants/AssetConstants.js";
 import { SPRITE } from "./constants/ComponentConstants.js";
 import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
-import { GROUNDCOLLISION, LEFTKEYDOWN, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "./constants/EventConstants.js";
+import { CHARGING, GROUNDCOLLISION, LEFTKEYDOWN, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { DashingState, JumpingState, RunningState, ShootingState, StandingState } from "./states/MegamanStates.js";
+import { ChargingState, DashingState, JumpingState, RunningState, ShootingState, StandingState } from "./states/MegamanStates.js";
 import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent, CreateHitboxComponent } from "./utilities/CreateComponents.js";
 
 
@@ -36,7 +36,7 @@ class Game {
         this.eventBus = { a: { aa: 1 } };           // { a: {} }
         this.audioObject = undefined;
 
-        this.audioPath = "";
+        this.audioPath = "./assets/Sound/intro-stage-rock-remix.mp3";
         this.isPaused = false;
         this.deltaTime = 0;
         this.millisecondsPreviousFrame = 0;
@@ -75,6 +75,21 @@ class Game {
                         [RIGHT]: []
                     },
                     [DASHING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    }
+                },
+                // static
+                [PROJECTILES]: {
+                    [LEMON]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    },
+                    [LEVEL1BUSTER]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    },
+                    [LEVEL2BUSTER]: {
                         [LEFT]: [],
                         [RIGHT]: []
                     }
@@ -149,6 +164,10 @@ class Game {
         this.loadAssets();
 
 
+        this.audioObject = new Audio(this.audioPath);
+        this.audioObject.loop = true;
+        this.audioObject.play();
+
 
     }
 
@@ -209,18 +228,18 @@ class Game {
             }
 
 
-            this.registry.getSystem(ANIMATION_SYSTEM).update(this.assets);
-            this.registry.getSystem(COLLISION_SYSTEM).update(this.player, this.eventBus, this.deltaTime)
+            Registry.getSystem(ANIMATION_SYSTEM).update(this.assets);
+            Registry.getSystem(COLLISION_SYSTEM).update(this.player, this.eventBus, this.deltaTime)
 
             if (this.eventBus[this.player.id] && !this.eventBus[this.player.id][GROUNDCOLLISION] && this.eventBus[this.player.id][RIGHTWALLCOLLISION]) console.log(this.eventBus[this.player.id])
 
-            this.registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus)
-            this.registry.getSystem(HITBOX_SYSTEM).update();
-            this.registry.getSystem(HEALTH_SYSTEM).update(this.registry);
-            this.registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
-            this.registry.getSystem(ACTIONABLE_SYSTEM).update(this.player, this.eventBus);
-            this.registry.getSystem(ITEM_SYSTEM).update(this.player)
-            this.registry.getSystem(STATE_SYSTEM).update(this.eventBus)
+            Registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus)
+            Registry.getSystem(HITBOX_SYSTEM).update();
+            Registry.getSystem(HEALTH_SYSTEM).update(this.registry);
+            Registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
+            Registry.getSystem(ACTIONABLE_SYSTEM).update(this.player, this.eventBus);
+            Registry.getSystem(ITEM_SYSTEM).update(this.player)
+            Registry.getSystem(STATE_SYSTEM).update(this.eventBus)
 
 
             // Clear certain events
@@ -239,7 +258,8 @@ class Game {
                 rigidBody.sumForces.y += rigidBody.mass * -10.8 * PIXELS_PER_METER;
 
 
-                console.log(rigidBody.sumForces)
+
+
 
             }
 
@@ -255,7 +275,7 @@ class Game {
 
     render = () => {
         if (!this.isPaused) {
-            this.registry.getSystem(RENDER_SYSTEM).update(this.isDebug, this.eventBus);
+            Registry.getSystem(RENDER_SYSTEM).update(this.isDebug, this.eventBus);
         }
     }
 
@@ -267,7 +287,7 @@ class Game {
                 key: string
                 type: string
             }
-    
+     
         */
 
         const { key, type } = e;
@@ -361,6 +381,10 @@ class Game {
                         break;
                     }
                     case "f": {
+                        if (State.currentSub === undefined) {
+                            this.eventBus[id][CHANGESUB](new ChargingState(), id)
+                        }
+
 
                         break;
                     }
@@ -375,26 +399,9 @@ class Game {
                 switch (key) {
                     case "f": {
                         if (State.currentSub === undefined || (State.currentSub && State.currentSub.name !== SHOOTING)) {
-                            // Create shot 
-                            let x;
-                            let d = `./assets/Projectiles/${Animation.direction}/0.png`
-                            if (Animation.direction === LEFT) {
-                                x = Position.x
-                            } else {
-                                x = Position.x + Position.width - 10
-                            }
+                            // Create shot
+                            console.log("key up")
 
-
-                            const p = CreatePositionComponent(x, Position.y + (Position.height / 2 - 10), 20, 20)
-                            const s = CreateSpriteComponent(d);
-                            const r = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
-                            const h = CreateHitboxComponent(0, 0, 20, 20)
-
-                            // Determine what shot is by charge time. do later
-                            const lemon = this.player.registry.createEntity([p, s, r, h]);
-
-
-                            const spriteComponent = Registry.getComponent(SPRITE, lemon.id);
                             this.eventBus[id][CHANGESUB](new ShootingState(), id)
                         }
                         break;
@@ -483,7 +490,8 @@ class Game {
 
                         if (subMode === NOSUB) {
                             endPath = `${mode}/${direction}/${counter}`;
-                        } else {
+                        }
+                        else {
                             endPath = `${mode}/${direction}/${subMode}/${counter}`;
 
                         }
@@ -495,6 +503,28 @@ class Game {
                 }
             }
         }
+
+        // Load shots
+        const shotPath = "./assets/Projectiles/"
+        const shotFrames = [LEMON, LEVEL1BUSTER, LEVEL2BUSTER]
+
+        // only 3 types of shots labeled 0 1 2 3. This corresponds to folder
+        for (let i = 0; i < shotFrames.length; i++) {
+            if (shotFrames[i] === null) continue;
+            // get each shot animation
+            for (let j = 0; j < shotFrames[i]; j++) {
+                for (let direction of directions) {
+                    const completeFilePath = shotPath + `${direction}/${i}/${j}.png`
+                    const newAsset = new Image();
+                    newAsset.src = completeFilePath;
+                    // shotframes i could be level 2 buster for example
+                    this.assets[MEGAMAN][PROJECTILES][shotFrames[i]][direction].push(newAsset);
+                }
+
+            }
+        }
+
+        console.log("this assets;", this.assets)
     }
 
 }
