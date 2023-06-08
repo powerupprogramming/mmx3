@@ -34,8 +34,11 @@ class Game {
         this.isDebug = false;
         this.eventBus = { a: { aa: 1 } };           // { a: {} }
         this.audioObject = undefined;
-
+        this.mmxShotAudio = undefined;
+        this.mmxChargingAudio = undefined;
         this.audioPath = "./assets/Sound/intro-stage-rock-remix.mp3";
+        // this.audioPath = "./assets/Sound/;
+
         this.isPaused = false;
         this.deltaTime = 0;
         this.millisecondsPreviousFrame = 0;
@@ -172,9 +175,9 @@ class Game {
         this.loadAssets();
 
 
-        this.audioObject = new Audio(this.audioPath);
-        this.audioObject.loop = true;
-        this.audioObject.play();
+        // this.audioObject = new Audio(this.audioPath);
+        // this.audioObject.loop = true;
+        // this.audioObject.play();
 
 
     }
@@ -235,7 +238,6 @@ class Game {
 
             }
 
-
             Registry.getSystem(ANIMATION_SYSTEM).update(this.assets);
             Registry.getSystem(COLLISION_SYSTEM).update(this.player, this.eventBus, this.deltaTime)
 
@@ -282,6 +284,10 @@ class Game {
 
 
     render = () => {
+        c.globalCompositeOperation = "source-over"
+        c.fillRect(400, 1000, 400, 400);
+        c.fillStyle = "Pink"
+
         if (!this.isPaused) {
             Registry.getSystem(RENDER_SYSTEM).update(this.isDebug, this.eventBus);
         }
@@ -345,6 +351,7 @@ class Game {
 
                     case "ArrowDown": {
 
+
                         break;
                     }
                     case "ArrowRight": {
@@ -393,6 +400,8 @@ class Game {
                     case "f": {
 
                         if (State.currentSub === undefined) {
+                            this.mmxChargingAudio = new Audio("./assets/Sound/megaman-shot-charge.mp3");
+                            this.mmxChargingAudio.play();
                             this.eventBus[id][CHANGESUB](new ChargingState(), id)
                         }
 
@@ -411,6 +420,8 @@ class Game {
                     case "f": {
                         if (State.currentSub === undefined || (State.currentSub && State.currentSub.name !== SHOOTING)) {
                             // Create shot
+                            this.mmxChargingAudio.pause();
+                            this.mmxChargingAudio = undefined;
                             const State = Registry.getComponent(STATE, this.player.id);
 
                             let shotId, x, assetPath, hitbox, rigid, sprite, position, animation;
@@ -430,6 +441,8 @@ class Game {
                                 sprite = CreateSpriteComponent(assetPath);
                                 position = CreatePositionComponent(Animation.direction === LEFT ? x : x - 10, Position.y + (Position.height / 2 - 10), 20, 20)
                                 animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+                                this.mmxShotAudio = new Audio("./assets/Sound/lemon-shot.mp3")
+                                this.mmxShotAudio.play();
                             } else if (Date.now() >= State.currentSub.startTime + 1000 && Date.now() <= State.currentSub.startTime + 2000) {
                                 shotId = 1
                                 assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
@@ -439,6 +452,10 @@ class Game {
                                 sprite = CreateSpriteComponent(assetPath);
                                 position = CreatePositionComponent(Animation.direction === LEFT ? x - 37 : x - 8, Position.y + (Position.height / 3) - 5, 50, 50)
                                 animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+                                this.mmxShotAudio = new Audio("./assets/Sound/medium-shot.mp3")
+                                this.mmxShotAudio.play();
+
+
                             } else {
                                 shotId = 2;
                                 assetPath = `./assets/Projectiles/${Animation.direction}/${shotId}/0.png`
@@ -448,11 +465,14 @@ class Game {
                                 sprite = CreateSpriteComponent(assetPath);
                                 position = CreatePositionComponent(Animation.direction === LEFT ? x - 35 : x - 10, Position.y, 100, 100)
                                 animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
+                                this.mmxShotAudio = new Audio("./assets/Sound/heavy-shot.mp3")
+                                this.mmxShotAudio.play();
                             }
 
 
 
                             const shot = this.registry.createEntity([hitbox, rigid, sprite, position, animation]);
+
 
 
                             this.eventBus[id][CHANGESUB](new ShootingState(), id)
