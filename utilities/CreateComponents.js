@@ -1,5 +1,5 @@
-import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER } from "../constants/AnimationComponentConstants.js";
-import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE, HITBOX } from "../constants/ComponentConstants.js";
+import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES } from "../constants/AnimationComponentConstants.js";
+import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE, HITBOX, CAMERA } from "../constants/ComponentConstants.js";
 
 // x: number, y : number, width: number: height: number
 // return dummyPosition
@@ -108,6 +108,27 @@ const CreateBusterShotAnimationComponent = (shotId, direction) => {
     return d;
 }
 
+const CreateSpyCopterAnimationComponent = () => {
+
+    const d = {
+        name: ANIMATION,
+        value: {
+            src: undefined,
+            mode: FLYING,
+            direction: RIGHT,
+            frames: {
+                [FLYING]: {
+                    animationLength: 100,
+                    [RIGHT]: SPYCOPTERFRAMES,
+                    [LEFT]: SPYCOPTERFRAMES
+                }
+            }
+        }
+    }
+
+    return d;
+}
+
 const CreateMegamanXAnimationComponent = () => {
     const d = {
         name: ANIMATION,
@@ -146,6 +167,14 @@ const CreateMegamanXAnimationComponent = () => {
     return d;
 }
 
+const CreateCameraComponent = () => {
+    const d = {
+        name: CAMERA,
+        value: {}
+    }
+    return d;
+}
+
 
 const CreateMegamanXStateComponent = () => {
     const d = {
@@ -165,4 +194,4 @@ const CreateMegamanXStateComponent = () => {
 }
 
 
-export { CreateBusterShotAnimationComponent, CreatePositionComponent, CreateHitboxComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent, CreateMegamanXStateComponent }
+export { CreateBusterShotAnimationComponent, CreateCameraComponent, CreateSpyCopterAnimationComponent, CreatePositionComponent, CreateHitboxComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent, CreateMegamanXStateComponent }

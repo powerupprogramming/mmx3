@@ -1,5 +1,5 @@
 import Registry from "../classes/Registry.js"
-import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING, DASHING, CHANGESTATE, ADDVELOCITYLEFT, ADDVELOCITYRIGHT, SHOOTING, CHARGING, CHANGESUB } from "../constants/AnimationComponentConstants.js"
+import { STANDING, RUNNING, TAKEOFF, LANDING, JUMPING, LEFT, RIGHT, CLIMBING, DASHING, CHANGESTATE, ADDVELOCITYLEFT, ADDVELOCITYRIGHT, SHOOTING, CHARGING, CHANGESUB, TPOSITION } from "../constants/AnimationComponentConstants.js"
 import { ANIMATION, POSITION, RIGIDBODY, SPRITE, STATE } from "../constants/ComponentConstants.js"
 import { COMBINATION } from "../constants/EventConstants.js";
 import { MOVEMENT_SYSTEM, RENDER_SYSTEM } from "../constants/SystemConstants.js";
@@ -102,6 +102,18 @@ class MegamanState {
     }
 }
 
+export class TPositionState extends MegamanState {
+    // essentially frozen 
+    constructor() {
+        super();
+
+        this.name = TPOSITION
+    }
+
+    enter = () => { };
+    execute = () => { };
+    exit = () => { }
+}
 
 export class RunningState extends MegamanState {
     constructor(frame) {

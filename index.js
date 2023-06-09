@@ -1,12 +1,13 @@
+import IntroCinematic from "./cinematics/IntroCinematic.js";
 import Registry from "./classes/Registry.js";
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, DASHING, DASHINGFRAMES, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES } from "./constants/AnimationComponentConstants.js";
-import { MEGAMAN } from "./constants/AssetConstants.js";
-import { SPRITE } from "./constants/ComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE } from "./constants/AnimationComponentConstants.js";
+import { ALIVE, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER } from "./constants/AssetConstants.js";
+import { PLAYER, SPRITE } from "./constants/ComponentConstants.js";
 import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
 import { CHARGING, GROUNDCOLLISION, LEFTKEYDOWN, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
-import { ChargingState, DashingState, JumpingState, RunningState, ShootingState, StandingState } from "./states/MegamanStates.js";
-import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent, CreateHitboxComponent, CreateBusterShotAnimationComponent } from "./utilities/CreateComponents.js";
+import { ChargingState, DashingState, JumpingState, RunningState, ShootingState, StandingState, TPositionState } from "./states/MegamanStates.js";
+import { CreateCollisionComponent, CreateMegamanXAnimationComponent, CreateRigidbodyComponent, CreatePositionComponent, CreateSpriteComponent, CreateMegamanXStateComponent, CreateHitboxComponent, CreateBusterShotAnimationComponent, CreateCameraComponent } from "./utilities/CreateComponents.js";
 
 
 export const canvas = document.createElement("canvas");
@@ -38,7 +39,7 @@ class Game {
         this.mmxChargingAudio = undefined;
         this.audioPath = "./assets/Sound/intro-stage-rock-remix.mp3";
         // this.audioPath = "./assets/Sound/;
-
+        this.inCinematic = false;
         this.isPaused = false;
         this.deltaTime = 0;
         this.millisecondsPreviousFrame = 0;
@@ -98,6 +99,21 @@ class Game {
                 }
 
 
+            },
+            [ENEMIES]: {
+                [ALIVE]: {
+                    [SPYCOPTER]: {
+                        [FLYING]: {
+                            [LEFT]: [],
+                            [RIGHT]: []
+                        }
+
+                    }
+
+                },
+                [DESTROYED]: {
+                    [SPYCOPTER]: []
+                }
             }
         }
     }
@@ -118,60 +134,15 @@ class Game {
 
         document.addEventListener("keyup", this.handleUserInput)
         document.addEventListener("keydown", this.handleUserInput)
+        document.addEventListener('DOMContentLoaded', function () {
+            // Your code here
+            window.scrollTo(0, 0)
+            // Set the zoom level to 50%
+            document.documentElement.style.zoom = "125%";
 
+        });
 
-        const p = CreatePositionComponent(1000, 50, 120, 90);
-        const s = CreateSpriteComponent("./assets/X-sprites.png", { x: 0, y: 60, width: 50, height: 50 });
-        const a = CreateMegamanXAnimationComponent();
-        const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
-        const c = CreateCollisionComponent();
-
-        const playerSprite = CreateSpriteComponent();
-        let playerState = CreateMegamanXStateComponent();
-
-
-
-
-        this.player = this.registry.createEntity([p, playerSprite, a, m, c, playerState]);
-
-
-        // Set player initial state
-        this.eventBus[this.player.id] = {}
-        // Set up eventBus, run update once to set up eventbus
-        Registry.getSystem(STATE_SYSTEM).initialize(this.eventBus)
-        this.eventBus[this.player.id][CHANGESTATE](new JumpingState(0), this.player.id)
-
-
-        let cityScapePosition = CreatePositionComponent(0, -600, 1000, 1000)
-        const cityScapeSprite = CreateSpriteComponent('./assets/Background/city-scape-background.png', undefined, "background")
-
-        this.registry.createEntity([cityScapePosition, cityScapeSprite])
-
-        cityScapePosition.value.x += 990
-        this.registry.createEntity([cityScapePosition, cityScapeSprite])
-
-        let bridgePosition = CreatePositionComponent(0, 400, 1000, 250)
-        const bridgeSprite = CreateSpriteComponent("./assets/Background/bridge.png")
-        const bridgeCollision = CreateCollisionComponent();
-
-        this.registry.createEntity([bridgeCollision, bridgeSprite, bridgePosition])
-
-        bridgePosition = CreatePositionComponent(1000, 400, 1000, 250)
-        this.registry.createEntity([bridgeCollision, bridgeSprite, bridgePosition])
-
-        const wallPosition = CreatePositionComponent(2000, 0, 200, 650)
-        const wallSprite = CreateSpriteComponent("./assets/Background/wall1.png")
-        const wallCollision = CreateCollisionComponent();
-
-        this.registry.createEntity([wallCollision, wallPosition, wallSprite])
-
-
-
-
-        const backgroundSprite = CreateSpriteComponent("./assets/Background/Intro-Stage.png");
-        const backgroundPosition = CreatePositionComponent(0, 0, 20000, 5000);
-
-        // this.registry.createEntity([backgroundPosition, backgroundSprite])
+        this.loadLevel();
         this.loadAssets();
 
 
@@ -179,6 +150,45 @@ class Game {
         // this.audioObject.loop = true;
         // this.audioObject.play();
 
+
+    }
+
+
+    loadLevel = () => {
+
+        let p = CreatePositionComponent(500, 2050, 120, 90);
+        const a = CreateMegamanXAnimationComponent();
+        const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
+        let c = CreateCollisionComponent();
+
+        const playerSprite = CreateSpriteComponent();
+        let playerState = CreateMegamanXStateComponent();
+        const ca = CreateCameraComponent();
+
+        this.player = this.registry.createEntity([p, playerSprite, a, m, c, ca, playerState], PLAYERTYPE)
+
+
+        // Set player initial state
+        this.eventBus[this.player.id] = {}
+        this.eventBus[CINEMATICS] = {};
+        this.eventBus[CINEMATICS][ENTER] = [];
+        this.eventBus[CINEMATICS][EXECUTE] = [];
+        // this.eventBus[CINEMATICS][EXIT] = [];
+
+        // Set up eventBus, run update once to set up eventbus
+        Registry.getSystem(STATE_SYSTEM).initialize(this.eventBus)
+        this.eventBus[this.player.id][CHANGESTATE](new StandingState(0), this.player.id)
+
+
+        const event = {
+            clas: IntroCinematic,
+            args: {
+                player: this.player,
+                eventBus: this.eventBus
+            }
+        }
+
+        this.eventBus[CINEMATICS][ENTER].push(event);
 
     }
 
@@ -243,7 +253,7 @@ class Game {
 
             if (this.eventBus[this.player.id] && !this.eventBus[this.player.id][GROUNDCOLLISION] && this.eventBus[this.player.id][RIGHTWALLCOLLISION]) console.log(this.eventBus[this.player.id])
 
-            Registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus)
+            Registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus, this.inCinematic)
             Registry.getSystem(HITBOX_SYSTEM).update();
             Registry.getSystem(HEALTH_SYSTEM).update(this.registry);
             Registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
@@ -268,9 +278,21 @@ class Game {
                 rigidBody.sumForces.y += rigidBody.mass * -10.8 * PIXELS_PER_METER;
 
 
+            }
+
+            if (this.eventBus[CINEMATICS][ENTER].length > 0) {
+                const { clas, args } = this.eventBus[CINEMATICS][ENTER][0]
+                const c = new clas(args);
+
+                c.enter();
+                this.inCinematic = true;
+
+            }
 
 
-
+            if (this.eventBus[CINEMATICS][EXECUTE].length > 0) {
+                const { object, args } = this.eventBus[CINEMATICS][EXECUTE][0];
+                object.execute(args);
             }
 
 
@@ -284,10 +306,6 @@ class Game {
 
 
     render = () => {
-        c.globalCompositeOperation = "source-over"
-        c.fillRect(400, 1000, 400, 400);
-        c.fillStyle = "Pink"
-
         if (!this.isPaused) {
             Registry.getSystem(RENDER_SYSTEM).update(this.isDebug, this.eventBus);
         }
@@ -471,7 +489,7 @@ class Game {
 
 
 
-                            const shot = this.registry.createEntity([hitbox, rigid, sprite, position, animation]);
+                            const shot = this.registry.createEntity([hitbox, rigid, sprite, position, animation], SHOTTYPE);
 
 
 
@@ -543,7 +561,7 @@ class Game {
     loadAssets = () => {
 
         // Load Megaman X assets to be used in Animations
-        const modes = [RUNNING, STANDING, JUMPING, DASHING];
+        let modes = [RUNNING, STANDING, JUMPING, DASHING];
         const subModes = [SHOOTING, NOSUB]
         const directions = [LEFT, RIGHT]
         const basePath = "./assets/MegamanX/";
@@ -576,6 +594,48 @@ class Game {
                 }
             }
         }
+
+        // Load enemies
+        const enemies = [SPYCOPTER];
+        const enemyPath = "./assets/Enemies"
+        const states = [ALIVE, DESTROYED];
+
+        modes = {
+            [SPYCOPTER]: [...SPYCOPTERMODES]
+        }
+
+        for (let state of states) {
+            for (let enemy of enemies) {
+                for (let mode of modes[enemy]) {
+                    // Jake - todo must fix - doing direction for destroyed creates doubling
+                    for (let direction of directions) {
+                        let counter = 0;
+                        let terminatingValue;
+                        if (enemy === SPYCOPTER) {
+                            if (state === ALIVE) terminatingValue = SPYCOPTERFRAMES;
+                            if (state === DESTROYED) terminatingValue = SPYCOPTERDESTROYEDFRAMES;
+                        }
+
+                        while (counter < terminatingValue) {
+                            const newAsset = new Image();
+
+                            if (state === ALIVE) {
+                                newAsset.src = `${enemyPath}/${state}/${enemy.toLowerCase()}/${mode}/${direction}/${counter}.png`;
+                                this.assets[ENEMIES][state][enemy][mode][direction].push(newAsset);
+
+                            } else {
+                                newAsset.src = `${enemyPath}/${state}/${enemy.toLowerCase()}/${counter}.png`;
+                                this.assets[ENEMIES][state][enemy].push(newAsset);
+
+                            }
+
+                            counter++;
+                        }
+                    }
+                }
+            }
+        }
+
 
         // Load shots
         const shotPath = "./assets/Projectiles/"

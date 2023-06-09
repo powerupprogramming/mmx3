@@ -1,5 +1,5 @@
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, LEVEL2BUSTER, NOSUB, PROJECTILES, RUNNING, SHOOTING, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
-import { MEGAMAN } from "../constants/AssetConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, LEVEL2BUSTER, NOSUB, PLAYERTYPE, PROJECTILES, RUNNING, SHOOTING, SHOTTYPE, TPOSITION, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { ALIVE, ENEMIES, MEGAMAN, SPYCOPTER } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { COMBINATION, GROUNDCOLLISION, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
@@ -20,7 +20,7 @@ class MovementSystem extends System {
         this.componentRequirements = [RIGIDBODY, POSITION];
     }
 
-    update = (dt, eventBus) => {
+    update = (dt, eventBus, inCinematic) => {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
 
@@ -32,25 +32,34 @@ class MovementSystem extends System {
             const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
 
             // Only apply to megaman for now
-            if (entity.id === 0) {
+            if (entity.id === 0 && this.inCinematic === false) {
+
+                const State = Registry.getComponent(STATE, entity.id);
+
                 sumForces.y += mass * 9.8 * PIXELS_PER_METER;
+
+
 
 
 
             }
 
 
-
             // Integrate the forces 
-            acceleration.x = sumForces.x * (1 / mass);
-            acceleration.y = sumForces.y * (1 / mass);
+            if (sumForces.x !== undefined)
+                acceleration.x = sumForces.x * (1 / mass);
+            if (sumForces.y !== undefined)
+                acceleration.y = sumForces.y * (1 / mass);
 
             // if (entity.id === 0) console.log("Acceleration ", acceleration.y)
 
 
             // Integrate acceleration into velocity
-            velocity.x += acceleration.x * dt;
-            velocity.y += acceleration.y * dt;
+            if (acceleration.x !== undefined)
+                velocity.x += acceleration.x * dt;
+            if (acceleration.y !== undefined)
+                velocity.y += acceleration.y * dt;
+
 
             if (Collision) {
 
@@ -94,8 +103,19 @@ class MovementSystem extends System {
 
 
             // Constant acceleration:
-            Position.x = Position.x + ((velocity.x * dt) + (velocity.knockbackX * dt)) + ((acceleration.x * dt * dt) / 2);
-            Position.y = Position.y + ((velocity.y * dt) + (velocity.knockbackY * dt)) + ((acceleration.y * dt * dt) / 2);
+            if (entity.id === 0) {
+                Position.x = Position.x + ((velocity.x * dt) + (velocity.knockbackX * dt)) + ((acceleration.x * dt * dt) / 2);
+                Position.y = Position.y + ((velocity.y * dt) + (velocity.knockbackY * dt)) + ((acceleration.y * dt * dt) / 2);
+            }
+            else {
+                if (velocity.x) {
+                    Position.x = Position.x + ((velocity.x * dt));
+                }
+                if (velocity.y) {
+                    Position.y = Position.y + ((velocity.y * dt));
+                }
+            }
+
 
 
 
@@ -574,15 +594,23 @@ class AnimationSystem extends System {
             const numOfFrames = mode ? Animation.frames[mode][direction] : Animation.frames.numFrames;
             const Sprite = Registry.getComponent(SPRITE, entity.id);
 
+            let target = undefined;
+
+            if (entity.type === PLAYERTYPE) target = MEGAMAN;
+            else if (entity.type === SHOTTYPE) target = MEGAMAN;
+            else if (entity.type === SPYCOPTER) target = SPYCOPTER;
+
+
+
             if (currentFrame === hold) {
 
 
                 if (subMode) {
 
-                    Sprite.sprite = assets[MEGAMAN][subMode][mode][direction][currentFrame];
+                    Sprite.sprite = assets[target][subMode][mode][direction][currentFrame];
                 }
                 else {
-                    Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][currentFrame];
+                    Sprite.sprite = assets[target][NOSUB][mode][direction][currentFrame];
 
                 }
 
@@ -634,7 +662,15 @@ class AnimationSystem extends System {
                 }
                 else if (mode && direction) {
 
-                    Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][nextFrame]
+
+                    if (entity.type === PLAYERTYPE) {
+                        Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][nextFrame]
+                    } else {
+                        // console.log("nextFrame: ", Animation, numOfFrames);
+
+                        Sprite.sprite = assets[ENEMIES][ALIVE][SPYCOPTER][mode][direction][nextFrame]
+
+                    }
                 }
 
                 Animation.currentFrame = nextFrame;

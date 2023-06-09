@@ -1,7 +1,7 @@
 import { Entity } from "./Entity.js";
-import { StateComponent, TransitionComponent, PositionComponent, SpriteComponent, RigidbodyComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent } from "./Component.js";
+import { StateComponent, TransitionComponent, PositionComponent, SpriteComponent, RigidbodyComponent, AnimationComponent, CollisionComponent, ActionableComponent, HitboxComponent, HealthComponent, ItemDropComponent, ItemComponent, CameraComponent } from "./Component.js";
 import { AnimationSystem, ActionableSystem, CollisionSystem, MovementSystem, RenderSystem, TransitionSystem, HitboxSystem, HealthSystem, ItemSystem, StateSystem } from "./System.js"
-import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, RIGIDBODY, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
+import { ACTIONABLE, ANIMATION, CHARACTER, COLLISION, HEALTH, HITBOX, RIGIDBODY, ITEM, ITEMDROP, POSITION, SPRITE, TRANSITION, STATE, CAMERA } from "../constants/ComponentConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HITBOX_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, TRANSITION_SYSTEM, HEALTH_SYSTEM, ITEM_SYSTEM, STATE_SYSTEM } from "../constants/SystemConstants.js";
 
 
@@ -76,8 +76,8 @@ class Registry {
     // components is an array
     // Currently, if entity has components that are added on later, the entity will not be put into the proper system
 
-    createEntity = (components) => {
-        const newEntity = new Entity(this.numberOfEntities, this);
+    createEntity = (components, type) => {
+        const newEntity = new Entity(this.numberOfEntities, this, type);
         for (let i = 0; i < components.length; i++) {
 
             const component = components[i];
@@ -186,8 +186,6 @@ class Registry {
                 Registry.componentEntityMapping[SPRITE][this.numberOfEntities] = new SpriteComponent(SPRITE, componentObj);
 
 
-                console.log("HERE WITH NEW COMPONENT", Registry.componentEntityMapping[SPRITE][this.numberOfEntities])
-
                 break;
             }
             case ANIMATION: {
@@ -198,14 +196,14 @@ class Registry {
                 Registry.componentEntityMapping[ANIMATION][this.numberOfEntities] = new AnimationComponent(ANIMATION, componentObj);
                 break;
             }
-            // case PLAYER: {
-            //     const componentObj = component["value"];
-            //     if (!Registry.componentEntityMapping[PLAYER]) {
-            //         Registry.componentEntityMapping[PLAYER] = {};
-            //     }
-            //     Registry.componentEntityMapping[PLAYER][this.numberOfEntities] = new PlayerComponent(PLAYER, componentObj);
-            //     break;
-            // }
+            case CAMERA: {
+                const componentObj = component["value"];
+                if (!Registry.componentEntityMapping[CAMERA]) {
+                    Registry.componentEntityMapping[CAMERA] = {};
+                }
+                Registry.componentEntityMapping[CAMERA][this.numberOfEntities] = new CameraComponent(CAMERA, componentObj);
+                break;
+            }
             case COLLISION: {
                 const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[COLLISION]) {

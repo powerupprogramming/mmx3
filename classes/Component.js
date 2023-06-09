@@ -61,6 +61,14 @@ class TransitionComponent extends Component {
     }
 }
 
+class CameraComponent extends Component {
+    constructor(componentType, componentObj) {
+        super(componentType);
+
+    }
+}
+
+
 class ActionableComponent extends Component {
     constructor(componentType, componentObj) {
         super(componentType);
@@ -204,4 +212,4 @@ class StateComponent extends Component {
 }
 
 
-export { RigidbodyComponent, HitboxComponent, ItemComponent, PositionComponent, ItemDropComponent, SpriteComponent, AnimationComponent, CollisionComponent, TransitionComponent, ActionableComponent, InventoryComponent, HealthComponent, StateComponent }
+export { RigidbodyComponent, CameraComponent, HitboxComponent, ItemComponent, PositionComponent, ItemDropComponent, SpriteComponent, AnimationComponent, CollisionComponent, TransitionComponent, ActionableComponent, InventoryComponent, HealthComponent, StateComponent }
