@@ -16,6 +16,17 @@ class Registry {
         this.numberOfEntities = 0;
         this.entitiesToBeAdded = [];    // entities[]
         this.entitiesToBeKilled = []    // entities[]
+        this.entityToComponents = {}
+        /*
+        1st key indice is entity id, second 
+        {
+            0: {
+                POSITION: true,
+                SPRITE: true
+            }
+        }       
+
+        */
         /*
         Fixed array length for components - 1st order
         map for second order
@@ -41,8 +52,6 @@ class Registry {
 
         for (let entityToBeKilled of this.entitiesToBeKilled) {
             // remove entities from systenm
-            // Go through each component it has
-
             for (let system of Object.values(Registry.systems)) {
 
 
@@ -53,6 +62,16 @@ class Registry {
                 }
 
             }
+
+            // must destroy the components that belong to each entity
+            // Go through each component it has
+            // key is component constant
+
+
+            for (let key of Object.keys(this.entityToComponents[entityToBeKilled.id])) {
+                delete Registry.componentEntityMapping[key][entityToBeKilled.id];
+            }
+
         }
 
         this.entitiesToBeKilled = [];
@@ -159,10 +178,17 @@ class Registry {
 
     addComponentToEntity = (component) => {
 
+        const componentObj = component["value"];
+
+        if (!this.entityToComponents[this.numberOfEntities]) {
+            this.entityToComponents[this.numberOfEntities] = {}
+        }
+        this.entityToComponents[this.numberOfEntities][component.name] = true;
+
 
         switch (component["name"]) {
             case POSITION: {
-                const componentObj = component["value"];
+
                 if (!Registry.componentEntityMapping[POSITION]) {
 
                     Registry.componentEntityMapping[POSITION] = {}
@@ -171,7 +197,6 @@ class Registry {
                 break;
             }
             case RIGIDBODY: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[RIGIDBODY]) {
                     Registry.componentEntityMapping[RIGIDBODY] = {};
                 }
@@ -179,7 +204,6 @@ class Registry {
                 break;
             }
             case SPRITE: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[SPRITE]) {
                     Registry.componentEntityMapping[SPRITE] = {};
                 }
@@ -189,7 +213,6 @@ class Registry {
                 break;
             }
             case ANIMATION: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[ANIMATION]) {
                     Registry.componentEntityMapping[ANIMATION] = {};
                 }
@@ -197,7 +220,6 @@ class Registry {
                 break;
             }
             case CAMERA: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[CAMERA]) {
                     Registry.componentEntityMapping[CAMERA] = {};
                 }
@@ -205,7 +227,6 @@ class Registry {
                 break;
             }
             case COLLISION: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[COLLISION]) {
                     Registry.componentEntityMapping[COLLISION] = {};
                 }
@@ -213,7 +234,6 @@ class Registry {
                 break;
             }
             case TRANSITION: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[TRANSITION]) {
                     Registry.componentEntityMapping[TRANSITION] = {};
                 }
@@ -221,7 +241,7 @@ class Registry {
                 break;
             }
             // case CHARACTER: {
-            //     const componentObj = component["value"];
+            //
             //     if (!Registry.componentEntityMapping[CHARACTER]) {
             //         Registry.componentEntityMapping[CHARACTER] = {};
             //     }
@@ -229,7 +249,6 @@ class Registry {
             //     break;
             // }
             case ACTIONABLE: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[ACTIONABLE]) {
                     Registry.componentEntityMapping[ACTIONABLE] = {};
                 }
@@ -237,7 +256,6 @@ class Registry {
                 break;
             }
             case HITBOX: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[HITBOX]) {
                     Registry.componentEntityMapping[HITBOX] = {};
                 }
@@ -245,7 +263,6 @@ class Registry {
                 break;
             }
             case HEALTH: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[HEALTH]) {
                     Registry.componentEntityMapping[HEALTH] = {};
                 }
@@ -254,7 +271,6 @@ class Registry {
             }
 
             case ITEM: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[ITEM]) {
                     Registry.componentEntityMapping[ITEM] = {};
                 }
@@ -262,7 +278,6 @@ class Registry {
                 break;
             }
             case ITEMDROP: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[ITEMDROP]) {
                     Registry.componentEntityMapping[ITEMDROP] = {};
                 }
@@ -270,7 +285,6 @@ class Registry {
                 break;
             }
             case STATE: {
-                const componentObj = component["value"];
                 if (!Registry.componentEntityMapping[STATE]) {
                     Registry.componentEntityMapping[STATE] = {};
                 }
@@ -314,6 +328,9 @@ class Registry {
             }
             if (addToSystem) {
                 system.entities.push(entity);
+                // reorder 
+                if (system.systemType === RENDER_SYSTEM) system.reorderEntities();
+
             }
         })
     }

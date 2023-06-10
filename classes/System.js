@@ -1,5 +1,5 @@
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, LEVEL2BUSTER, NOSUB, PLAYERTYPE, PROJECTILES, RUNNING, SHOOTING, SHOTTYPE, TPOSITION, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
-import { ALIVE, ENEMIES, MEGAMAN, SPYCOPTER } from "../constants/AssetConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, LEVEL2BUSTER, NOSUB, PLAYERTYPE, PROJECTILES, RUNNING, SABER, SHOOTING, SHOTTYPE, TPOSITION, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
+import { ALIVE, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { COMBINATION, GROUNDCOLLISION, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
@@ -235,7 +235,6 @@ class CollisionSystem extends System {
                 ) {
                     Collision.collisionLeft = true;
 
-                    console.log("LEFT")
 
                     eventBus[player.id][LEFTWALLCOLLISION] = () => { }
                 }
@@ -483,6 +482,15 @@ class RenderSystem extends System {
         this.componentRequirements = [POSITION, SPRITE];
     }
 
+    reorderEntities = () => {
+
+        this.entities.sort((a, b) => {
+            const spriteA = Registry.getComponent(SPRITE, a.id);
+            const spriteB = Registry.getComponent(SPRITE, b.id);
+            return spriteA.depth - spriteB.depth;
+        });
+    }
+
     update = (isDebug, eventBus) => {
         c.clearRect(0, 0, canvas.width, canvas.height)
         for (let i = 0; i < this.entities.length; i++) {
@@ -503,29 +511,18 @@ class RenderSystem extends System {
             c.beginPath();
 
 
-            if (depth === "background") {
-
-                c.globalCompositeOperation = "destination-over"
-                // c.imageSmoothingEnabled = true;
-                // c.imageSmoothingQuality = "high";
-                // const { x: sx, y: sy, width: sw, height: sh } = srcRect;
-
-                // c.drawImage(sprite, sx, sy, sw, sh, x, y, width, height);
-                c.drawImage(sprite, x, y, width, height);
-
-            }
-            else {
 
 
-                c.imageSmoothingEnabled = true;
-                c.imageSmoothingQuality = "high";
-                c.globalCompositeOperation = "source-over"
+            c.imageSmoothingEnabled = true;
+            c.imageSmoothingQuality = "high";
+            c.globalCompositeOperation = "source-over"
 
-                c.drawImage(sprite, x, y, width, height)
+
+            c.drawImage(sprite, x, y, width, height)
 
 
 
-            }
+
 
             if (isDebug) {
 
@@ -597,12 +594,12 @@ class AnimationSystem extends System {
             let target = undefined;
 
             if (entity.type === PLAYERTYPE) target = MEGAMAN;
+            else if (entity.type === ZERO) target = ZERO;
             else if (entity.type === SHOTTYPE) target = MEGAMAN;
             else if (entity.type === SPYCOPTER) target = SPYCOPTER;
 
-
-
             if (currentFrame === hold) {
+                console.log("SPRITE ", Sprite.sprite);
 
 
                 if (subMode) {
@@ -610,44 +607,79 @@ class AnimationSystem extends System {
                     Sprite.sprite = assets[target][subMode][mode][direction][currentFrame];
                 }
                 else {
-                    Sprite.sprite = assets[target][NOSUB][mode][direction][currentFrame];
+
+                    if (mode === DESTROYED) {
+                        Sprite.sprite = assets[target][DESTROYED][currentFrame]
+                    } else
+                        Sprite.sprite = assets[target][NOSUB][mode][direction][currentFrame];
 
                 }
 
             }
+            // For shot that alternates
             else if (alternatingFrameRange && currentFrame >= alternatingFrameRange[0]) {
 
 
+                if (entity.type === ZERO) {
 
-                // Clamp animation speed
-                if (Animation.currentTimeOfAnimation + 50 > Date.now()) continue;
+                    // Clamp animation speed
+                    if (Animation.currentTimeOfAnimation + 50 > Date.now()) continue;
 
 
-                // Since must be projectile, num of frames equals type since type is just a number
+                    // Since must be projectile, num of frames equals type since type is just a number
 
-                if (currentFrame === alternatingFrameRange[0]) {
-                    Animation.currentFrame += 1;
-                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][alternatingFrameRange[0]]
+                    if (currentFrame === alternatingFrameRange[0]) {
+                        Animation.currentFrame += 1;
+                        Sprite.sprite = Sprite.sprite = assets[ZERO][NOSUB][mode][direction][Animation.currentFrame];
+                    }
+                    // if it is less than max
+                    else if (currentFrame <= alternatingFrameRange[1]) {
+                        Sprite.sprite = assets[ZERO][NOSUB][mode][direction][Animation.currentFrame]
+                        Animation.currentFrame += 1;
+
+                    }
+
+                    // if greater than final frame, set to range[0]
+                    else if (currentFrame > alternatingFrameRange[1]) {
+                        // loop around
+                        Animation.currentFrame = alternatingFrameRange[0]
+                        Sprite.sprite = assets[ZERO][NOSUB][mode][direction][Animation.currentFrame]
+                    }
                 }
-                // if it is less than max
-                else if (currentFrame <= alternatingFrameRange[1]) {
-                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][Animation.currentFrame]
-                    Animation.currentFrame += 1;
+                if (entity.type === SHOTTYPE) {
+                    // Clamp animation speed
+                    if (Animation.currentTimeOfAnimation + 50 > Date.now()) continue;
 
+
+                    // Since must be projectile, num of frames equals type since type is just a number
+
+                    if (currentFrame === alternatingFrameRange[0]) {
+                        Animation.currentFrame += 1;
+                        Sprite.sprite = assets[target][PROJECTILES][numOfFrames][direction][alternatingFrameRange[0]]
+                    }
+                    // if it is less than max
+                    else if (currentFrame <= alternatingFrameRange[1]) {
+                        Sprite.sprite = assets[target][PROJECTILES][numOfFrames][direction][Animation.currentFrame]
+                        Animation.currentFrame += 1;
+
+                    }
+
+                    // if greater than final frame, set to range[0]
+                    else if (currentFrame > alternatingFrameRange[1]) {
+                        // loop around
+                        Animation.currentFrame = alternatingFrameRange[0]
+                        Sprite.sprite = assets[target][PROJECTILES][numOfFrames][direction][Animation.currentFrame]
+                    }
                 }
 
-                // if greater than final frame, set to range[0]
-                else if (currentFrame > alternatingFrameRange[1]) {
-                    // loop around
-                    Animation.currentFrame = alternatingFrameRange[0]
-                    Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][Animation.currentFrame]
-                }
+
 
 
 
             }
             else {
-                const nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
+                console.log("SPRITE2 ", Sprite.sprite);
+                let nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
 
                 // Must be projectile if no mode
                 if (mode === undefined) {
@@ -656,8 +688,15 @@ class AnimationSystem extends System {
 
                     Sprite.sprite = assets[MEGAMAN][PROJECTILES][numOfFrames][direction][nextFrame];
                 }
-                if (subMode === SHOOTING) {
-                    Sprite.sprite = assets[MEGAMAN][SHOOTING][mode][direction][nextFrame]
+                if (subMode === SHOOTING || subMode === SABER) {
+
+                    if (subMode === SABER) {
+                        // speed up animation
+                        nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / 150) % numOfFrames);
+                        Sprite.sprite = assets[ZERO][SABER][mode][direction][nextFrame]
+                    }
+
+                    if (subMode === SHOOTING) Sprite.sprite = assets[MEGAMAN][SHOOTING][mode][direction][nextFrame]
 
                 }
                 else if (mode && direction) {
@@ -665,14 +704,20 @@ class AnimationSystem extends System {
 
                     if (entity.type === PLAYERTYPE) {
                         Sprite.sprite = assets[MEGAMAN][NOSUB][mode][direction][nextFrame]
-                    } else {
+                    }
+                    else if (entity.type === ZERO) {
+                        Sprite.sprite = assets[ZERO][NOSUB][mode][direction][nextFrame]
+
+                    }
+                    else {
                         // console.log("nextFrame: ", Animation, numOfFrames);
 
-                        Sprite.sprite = assets[ENEMIES][ALIVE][SPYCOPTER][mode][direction][nextFrame]
+                        Sprite.sprite = assets[SPYCOPTER][NOSUB][mode][direction][nextFrame]
 
                     }
                 }
 
+                // console.log("next frame: ", Animation)
                 Animation.currentFrame = nextFrame;
             }
 

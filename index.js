@@ -1,9 +1,10 @@
 import IntroCinematic from "./cinematics/IntroCinematic.js";
 import Registry from "./classes/Registry.js";
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE } from "./constants/AnimationComponentConstants.js";
-import { ALIVE, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER } from "./constants/AssetConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE, WALL, WALLFRAMES, SABER, ZEROJUMPINGFRAMES, ZEROWALLFRAMES } from "./constants/AnimationComponentConstants.js";
+import { ALIVE, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "./constants/AssetConstants.js";
 import { PLAYER, SPRITE } from "./constants/ComponentConstants.js";
 import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
+import { BACKGROUND, HIGHESTDEPTH, MIDGROUND } from "./constants/DepthConstants.js";
 import { CHARGING, GROUNDCOLLISION, LEFTKEYDOWN, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "./constants/EventConstants.js";
 import { ACTIONABLE_SYSTEM, ANIMATION_SYSTEM, COLLISION_SYSTEM, HEALTH_SYSTEM, HITBOX_SYSTEM, ITEM_SYSTEM, MOVEMENT_SYSTEM, RENDER_SYSTEM, STATE_SYSTEM, TRANSITION_SYSTEM } from "./constants/SystemConstants.js";
 import { ChargingState, DashingState, JumpingState, RunningState, ShootingState, StandingState, TPositionState } from "./states/MegamanStates.js";
@@ -62,7 +63,12 @@ class Game {
                     [DASHING]: {
                         [LEFT]: [],
                         [RIGHT]: []
+                    },
+                    [WALL]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
                     }
+
                 },
                 [SHOOTING]: {
                     [STANDING]: {
@@ -78,6 +84,10 @@ class Game {
                         [RIGHT]: []
                     },
                     [DASHING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    },
+                    [WALL]: {
                         [LEFT]: [],
                         [RIGHT]: []
                     }
@@ -100,21 +110,42 @@ class Game {
 
 
             },
-            [ENEMIES]: {
-                [ALIVE]: {
-                    [SPYCOPTER]: {
-                        [FLYING]: {
-                            [LEFT]: [],
-                            [RIGHT]: []
-                        }
+            [ZERO]: {
+                [NOSUB]: {
+                    [JUMPING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    },
+                    [WALL]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    }
+                },
+                [SABER]: {
+                    [JUMPING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    },
+                    [WALL]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    }
+                }
+            },
+
+            [SPYCOPTER]: {
+                [NOSUB]: {
+                    [FLYING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
 
                     }
 
                 },
-                [DESTROYED]: {
-                    [SPYCOPTER]: []
-                }
-            }
+                [DESTROYED]: []
+            },
+
+
         }
     }
 
@@ -161,7 +192,7 @@ class Game {
         const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
         let c = CreateCollisionComponent();
 
-        const playerSprite = CreateSpriteComponent();
+        const playerSprite = CreateSpriteComponent(undefined, undefined, 2.5);
         let playerState = CreateMegamanXStateComponent();
         const ca = CreateCameraComponent();
 
@@ -456,7 +487,7 @@ class Game {
 
                                 hitbox = CreateHitboxComponent(0, 0, 20, 20)
                                 rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
-                                sprite = CreateSpriteComponent(assetPath);
+                                sprite = CreateSpriteComponent(assetPath, undefined, MIDGROUND);
                                 position = CreatePositionComponent(Animation.direction === LEFT ? x : x - 10, Position.y + (Position.height / 2 - 10), 20, 20)
                                 animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
                                 this.mmxShotAudio = new Audio("./assets/Sound/lemon-shot.mp3")
@@ -467,7 +498,7 @@ class Game {
 
                                 hitbox = CreateHitboxComponent(0, 0, 20, 20)
                                 rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
-                                sprite = CreateSpriteComponent(assetPath);
+                                sprite = CreateSpriteComponent(assetPath, undefined, MIDGROUND);
                                 position = CreatePositionComponent(Animation.direction === LEFT ? x - 37 : x - 8, Position.y + (Position.height / 3) - 5, 50, 50)
                                 animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
                                 this.mmxShotAudio = new Audio("./assets/Sound/medium-shot.mp3")
@@ -480,7 +511,7 @@ class Game {
 
                                 hitbox = CreateHitboxComponent(0, 0, 100, 100)
                                 rigid = CreateRigidbodyComponent(Animation.direction === LEFT ? -500 : 500, 0, 0, 0, 0, 0, 20);
-                                sprite = CreateSpriteComponent(assetPath);
+                                sprite = CreateSpriteComponent(assetPath, undefined, MIDGROUND);
                                 position = CreatePositionComponent(Animation.direction === LEFT ? x - 35 : x - 10, Position.y, 100, 100)
                                 animation = CreateBusterShotAnimationComponent(shotId, Animation.direction);
                                 this.mmxShotAudio = new Audio("./assets/Sound/heavy-shot.mp3")
@@ -561,8 +592,8 @@ class Game {
     loadAssets = () => {
 
         // Load Megaman X assets to be used in Animations
-        let modes = [RUNNING, STANDING, JUMPING, DASHING];
-        const subModes = [SHOOTING, NOSUB]
+        let modes = [RUNNING, STANDING, JUMPING, DASHING, WALL];
+        let subModes = [SHOOTING, NOSUB]
         const directions = [LEFT, RIGHT]
         const basePath = "./assets/MegamanX/";
 
@@ -575,7 +606,8 @@ class Game {
                     if (mode === RUNNING) terminatingValue = RUNNINGFRAMES;
                     else if (mode === JUMPING) terminatingValue = JUMPINGFRAMES;
                     else if (mode === STANDING) terminatingValue = STANDINGFRAMES
-                    else if (mode === DASHING) terminatingValue = DASHINGFRAMES
+                    else if (mode === DASHING) terminatingValue = DASHINGFRAMES;
+                    else if (mode === WALL) terminatingValue = WALLFRAMES;
                     while (counter < terminatingValue) {
                         const newAsset = new Image();
 
@@ -588,6 +620,8 @@ class Game {
                         }
                         // For things like landing where this is no sub modes this will lead to an undefined path and image
                         newAsset.src = basePath + endPath + ".png";
+                        // console.log(subMode)
+                        // console.log(this.assets[subMode])
                         this.assets[MEGAMAN][subMode][mode][direction].push(newAsset)
                         counter++;
                     }
@@ -598,7 +632,7 @@ class Game {
         // Load enemies
         const enemies = [SPYCOPTER];
         const enemyPath = "./assets/Enemies"
-        const states = [ALIVE, DESTROYED];
+        const states = [NOSUB, DESTROYED];
 
         modes = {
             [SPYCOPTER]: [...SPYCOPTERMODES]
@@ -612,20 +646,21 @@ class Game {
                         let counter = 0;
                         let terminatingValue;
                         if (enemy === SPYCOPTER) {
-                            if (state === ALIVE) terminatingValue = SPYCOPTERFRAMES;
+                            if (state === NOSUB) terminatingValue = SPYCOPTERFRAMES;
                             if (state === DESTROYED) terminatingValue = SPYCOPTERDESTROYEDFRAMES;
                         }
 
                         while (counter < terminatingValue) {
                             const newAsset = new Image();
+                            console.log("New asset: 1 ", state)
 
-                            if (state === ALIVE) {
-                                newAsset.src = `${enemyPath}/${state}/${enemy.toLowerCase()}/${mode}/${direction}/${counter}.png`;
-                                this.assets[ENEMIES][state][enemy][mode][direction].push(newAsset);
+                            if (state === NOSUB) {
+                                newAsset.src = `${enemyPath}/alive/${enemy.toLowerCase()}/${mode}/${direction}/${counter}.png`;
+                                this.assets[enemy][state][mode][direction].push(newAsset);
 
                             } else {
                                 newAsset.src = `${enemyPath}/${state}/${enemy.toLowerCase()}/${counter}.png`;
-                                this.assets[ENEMIES][state][enemy].push(newAsset);
+                                this.assets[enemy][state].push(newAsset);
 
                             }
 
@@ -636,6 +671,41 @@ class Game {
             }
         }
 
+        // Load Zero Sprites
+        modes = [JUMPING, WALL]
+        subModes = [SABER, NOSUB]
+        const zeroPath = "./assets/Zero/";
+
+
+        for (let mode of modes) {
+            for (let direction of directions) {
+                for (let subMode of subModes) {
+                    let counter = 0;
+                    let terminatingValue;
+                    let endPath = "";
+                    if (mode === JUMPING) terminatingValue = ZEROJUMPINGFRAMES;
+                    if (mode === WALL) terminatingValue = ZEROWALLFRAMES;
+                    while (counter < terminatingValue) {
+
+                        const newAsset = new Image();
+
+                        if (subMode === NOSUB) {
+                            endPath = `${mode}/${direction}/${counter}`;
+                        }
+                        else {
+                            endPath = `${mode}/${direction}/${subMode}/${counter}`;
+
+                        }
+
+                        newAsset.src = zeroPath + endPath + ".png";
+
+                        this.assets[ZERO][subMode][mode][direction].push(newAsset)
+
+                        counter++;
+                    }
+                }
+            }
+        }
 
         // Load shots
         const shotPath = "./assets/Projectiles/"

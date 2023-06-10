@@ -1,4 +1,5 @@
-import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES } from "../constants/AnimationComponentConstants.js";
+import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES, WALL, WALLFRAMES, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, SPYCOPTERDESTROYEDFRAMES } from "../constants/AnimationComponentConstants.js";
+import { DESTROYED } from "../constants/AssetConstants.js";
 import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE, HITBOX, CAMERA } from "../constants/ComponentConstants.js";
 
 // x: number, y : number, width: number: height: number
@@ -74,7 +75,6 @@ const CreateCollisionComponent = () => {
 
 const CreateBusterShotAnimationComponent = (shotId, direction) => {
 
-    console.log("Shot id: ", shotId, " direction: ", direction)
 
     let alternatingFrameRange
     let numFrames = 0;
@@ -121,6 +121,12 @@ const CreateSpyCopterAnimationComponent = () => {
                     animationLength: 100,
                     [RIGHT]: SPYCOPTERFRAMES,
                     [LEFT]: SPYCOPTERFRAMES
+                },
+                [DESTROYED]: {
+                    hold: 0,
+                    animationLength: 33,
+                    [RIGHT]: SPYCOPTERDESTROYEDFRAMES,
+                    [LEFT]: SPYCOPTERDESTROYEDFRAMES
                 }
             }
         }
@@ -159,7 +165,12 @@ const CreateMegamanXAnimationComponent = () => {
                     hold: 1,
                     [RIGHT]: DASHINGFRAMES,
                     [LEFT]: DASHINGFRAMES,
-
+                },
+                [WALL]: {
+                    animationLength: 10000,
+                    hold: 0,
+                    [LEFT]: WALLFRAMES,
+                    [RIGHT]: WALLFRAMES
                 }
             }
         }
@@ -175,6 +186,31 @@ const CreateCameraComponent = () => {
     return d;
 }
 
+const CreateZeroAnimationComponent = () => {
+    const d = {
+        name: ANIMATION,
+        value: {
+            src: undefined,
+            mode: JUMPING,
+            direction: LEFT,
+            frames: {
+                [JUMPING]: {
+                    animationLength: 500,
+                    [RIGHT]: ZEROJUMPINGFRAMES,
+                    [LEFT]: ZEROJUMPINGFRAMES
+                },
+                [WALL]: {
+                    hold: 0,
+                    animationLength: 500,
+                    [RIGHT]: ZEROWALLFRAMES,
+                    [LEFT]: ZEROWALLFRAMES
+                }
+            }
+        }
+    }
+
+    return d;
+}
 
 const CreateMegamanXStateComponent = () => {
     const d = {
@@ -194,4 +230,4 @@ const CreateMegamanXStateComponent = () => {
 }
 
 
-export { CreateBusterShotAnimationComponent, CreateCameraComponent, CreateSpyCopterAnimationComponent, CreatePositionComponent, CreateHitboxComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent, CreateMegamanXStateComponent }
+export { CreateBusterShotAnimationComponent, CreateZeroAnimationComponent, CreateCameraComponent, CreateSpyCopterAnimationComponent, CreatePositionComponent, CreateHitboxComponent, CreateCollisionComponent, CreateSpriteComponent, CreateAnimationComponent, CreateRigidbodyComponent, CreateMegamanXAnimationComponent, CreateMegamanXStateComponent }
