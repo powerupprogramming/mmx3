@@ -1,4 +1,4 @@
-import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES, WALL, WALLFRAMES, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, SPYCOPTERDESTROYEDFRAMES } from "../constants/AnimationComponentConstants.js";
+import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES, WALL, WALLFRAMES, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, SPYCOPTERDESTROYEDFRAMES, ZEROSTANDINGFRAMES } from "../constants/AnimationComponentConstants.js";
 import { DESTROYED } from "../constants/AssetConstants.js";
 import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE, HITBOX, CAMERA } from "../constants/ComponentConstants.js";
 
@@ -145,7 +145,7 @@ const CreateMegamanXAnimationComponent = () => {
             direction: RIGHT,
             frames: {
                 [STANDING]: {
-                    animationLength: 2000,
+                    animationLength: 400,
                     [RIGHT]: STANDINGFRAMES,
                     [LEFT]: STANDINGFRAMES
                 },
@@ -198,6 +198,11 @@ const CreateZeroAnimationComponent = () => {
                     animationLength: 500,
                     [RIGHT]: ZEROJUMPINGFRAMES,
                     [LEFT]: ZEROJUMPINGFRAMES
+                },
+                [STANDING]: {
+                    animationLength: 500,
+                    [RIGHT]: ZEROSTANDINGFRAMES,
+                    [LEFT]: ZEROSTANDINGFRAMES
                 },
                 [WALL]: {
                     hold: 0,

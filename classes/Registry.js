@@ -200,7 +200,9 @@ class Registry {
                 if (!Registry.componentEntityMapping[RIGIDBODY]) {
                     Registry.componentEntityMapping[RIGIDBODY] = {};
                 }
+                // if (entity.id !== 0)
                 Registry.componentEntityMapping[RIGIDBODY][this.numberOfEntities] = new RigidbodyComponent(RIGIDBODY, componentObj);
+
                 break;
             }
             case SPRITE: {

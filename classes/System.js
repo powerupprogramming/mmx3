@@ -1,5 +1,5 @@
 import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, JUMPING, LEFT, LEVEL2BUSTER, NOSUB, PLAYERTYPE, PROJECTILES, RUNNING, SABER, SHOOTING, SHOTTYPE, TPOSITION, TRANSITIONSTATE } from "../constants/AnimationComponentConstants.js";
-import { ALIVE, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "../constants/AssetConstants.js";
+import { ALIVE, DEBRIS, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "../constants/AssetConstants.js";
 import { ACTIONABLE, ANIMATION, COLLISION, HEALTH, HITBOX, ITEM, RIGIDBODY, POSITION, SPRITE, TRANSITION, STATE } from "../constants/ComponentConstants.js";
 import { COMBINATION, GROUNDCOLLISION, LEFTWALLCOLLISION, RIGHTKEYDOWN, RIGHTWALLCOLLISION } from "../constants/EventConstants.js";
 import { canvas, c, MILLISECONDS_PER_FRAME, PIXELS_PER_METER } from "../index.js";
@@ -20,7 +20,7 @@ class MovementSystem extends System {
         this.componentRequirements = [RIGIDBODY, POSITION];
     }
 
-    update = (dt, eventBus, inCinematic) => {
+    update = (dt, eventBus, stopGravity) => {
         for (let i = 0; i < this.entities.length; i++) {
             const entity = this.entities[i];
 
@@ -32,11 +32,9 @@ class MovementSystem extends System {
             const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
 
             // Only apply to megaman for now
-            if (entity.id === 0 && this.inCinematic === false) {
+            if ((entity.type === MEGAMAN || entity.type === DEBRIS) && stopGravity === false) {
 
-                const State = Registry.getComponent(STATE, entity.id);
-
-                sumForces.y += mass * 9.8 * PIXELS_PER_METER;
+                sumForces.y = mass * 9.8 * PIXELS_PER_METER;
 
 
 
@@ -599,7 +597,6 @@ class AnimationSystem extends System {
             else if (entity.type === SPYCOPTER) target = SPYCOPTER;
 
             if (currentFrame === hold) {
-                console.log("SPRITE ", Sprite.sprite);
 
 
                 if (subMode) {
@@ -629,11 +626,13 @@ class AnimationSystem extends System {
                     // Since must be projectile, num of frames equals type since type is just a number
 
                     if (currentFrame === alternatingFrameRange[0]) {
+
                         Animation.currentFrame += 1;
                         Sprite.sprite = Sprite.sprite = assets[ZERO][NOSUB][mode][direction][Animation.currentFrame];
                     }
                     // if it is less than max
                     else if (currentFrame <= alternatingFrameRange[1]) {
+
                         Sprite.sprite = assets[ZERO][NOSUB][mode][direction][Animation.currentFrame]
                         Animation.currentFrame += 1;
 
@@ -641,9 +640,11 @@ class AnimationSystem extends System {
 
                     // if greater than final frame, set to range[0]
                     else if (currentFrame > alternatingFrameRange[1]) {
+
                         // loop around
                         Animation.currentFrame = alternatingFrameRange[0]
                         Sprite.sprite = assets[ZERO][NOSUB][mode][direction][Animation.currentFrame]
+
                     }
                 }
                 if (entity.type === SHOTTYPE) {
@@ -678,7 +679,6 @@ class AnimationSystem extends System {
 
             }
             else {
-                console.log("SPRITE2 ", Sprite.sprite);
                 let nextFrame = Math.floor(((Animation.currentTimeOfAnimation - Animation.startOfAnimation) / animationLength) % numOfFrames);
 
                 // Must be projectile if no mode
@@ -717,7 +717,6 @@ class AnimationSystem extends System {
                     }
                 }
 
-                // console.log("next frame: ", Animation)
                 Animation.currentFrame = nextFrame;
             }
 

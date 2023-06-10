@@ -1,7 +1,7 @@
 import IntroCinematic from "./cinematics/IntroCinematic.js";
 import Registry from "./classes/Registry.js";
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE, WALL, WALLFRAMES, SABER, ZEROJUMPINGFRAMES, ZEROWALLFRAMES } from "./constants/AnimationComponentConstants.js";
-import { ALIVE, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "./constants/AssetConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE, WALL, WALLFRAMES, SABER, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, ZEROSTANDINGFRAMES, SPYCOPTERDERBRISFRAMES } from "./constants/AnimationComponentConstants.js";
+import { ALIVE, DEBRIS, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "./constants/AssetConstants.js";
 import { PLAYER, SPRITE } from "./constants/ComponentConstants.js";
 import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
 import { BACKGROUND, HIGHESTDEPTH, MIDGROUND } from "./constants/DepthConstants.js";
@@ -40,7 +40,12 @@ class Game {
         this.mmxChargingAudio = undefined;
         this.audioPath = "./assets/Sound/intro-stage-rock-remix.mp3";
         // this.audioPath = "./assets/Sound/;
-        this.inCinematic = false;
+        // this.inCinematic = false;
+        // this.stopGravity = false;
+        this.physicsSim = {
+            inCinematic: false,
+            stopGravity: false
+        };
         this.isPaused = false;
         this.deltaTime = 0;
         this.millisecondsPreviousFrame = 0;
@@ -119,10 +124,18 @@ class Game {
                     [WALL]: {
                         [LEFT]: [],
                         [RIGHT]: []
+                    },
+                    [STANDING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
                     }
                 },
                 [SABER]: {
                     [JUMPING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
+                    },
+                    [STANDING]: {
                         [LEFT]: [],
                         [RIGHT]: []
                     },
@@ -142,7 +155,8 @@ class Game {
                     }
 
                 },
-                [DESTROYED]: []
+                [DESTROYED]: [],
+                [DEBRIS]: []
             },
 
 
@@ -215,7 +229,8 @@ class Game {
             clas: IntroCinematic,
             args: {
                 player: this.player,
-                eventBus: this.eventBus
+                eventBus: this.eventBus,
+                physicsSim: this.physicsSim
             }
         }
 
@@ -284,7 +299,7 @@ class Game {
 
             if (this.eventBus[this.player.id] && !this.eventBus[this.player.id][GROUNDCOLLISION] && this.eventBus[this.player.id][RIGHTWALLCOLLISION]) console.log(this.eventBus[this.player.id])
 
-            Registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus, this.inCinematic)
+            Registry.getSystem(MOVEMENT_SYSTEM).update(this.deltaTime, this.eventBus, this.physicsSim.stopGravity)
             Registry.getSystem(HITBOX_SYSTEM).update();
             Registry.getSystem(HEALTH_SYSTEM).update(this.registry);
             Registry.getSystem(TRANSITION_SYSTEM).update(this.player, this.eventBus, this.loadNewScreen)
@@ -316,7 +331,8 @@ class Game {
                 const c = new clas(args);
 
                 c.enter();
-                this.inCinematic = true;
+                this.physicsSim["inCinematic"] = true;
+                this.physicsSim["stopGravity"] = true;
 
             }
 
@@ -632,7 +648,7 @@ class Game {
         // Load enemies
         const enemies = [SPYCOPTER];
         const enemyPath = "./assets/Enemies"
-        const states = [NOSUB, DESTROYED];
+        const states = [NOSUB, DESTROYED, DEBRIS];
 
         modes = {
             [SPYCOPTER]: [...SPYCOPTERMODES]
@@ -641,13 +657,15 @@ class Game {
         for (let state of states) {
             for (let enemy of enemies) {
                 for (let mode of modes[enemy]) {
-                    // Jake - todo must fix - doing direction for destroyed creates doubling
+                    // Jake - todo must fix - doing direction for destroyed and debris creates doubling
                     for (let direction of directions) {
                         let counter = 0;
                         let terminatingValue;
                         if (enemy === SPYCOPTER) {
                             if (state === NOSUB) terminatingValue = SPYCOPTERFRAMES;
                             if (state === DESTROYED) terminatingValue = SPYCOPTERDESTROYEDFRAMES;
+                            if (state === DEBRIS) terminatingValue = SPYCOPTERDERBRISFRAMES;
+
                         }
 
                         while (counter < terminatingValue) {
@@ -672,7 +690,7 @@ class Game {
         }
 
         // Load Zero Sprites
-        modes = [JUMPING, WALL]
+        modes = [JUMPING, WALL, STANDING]
         subModes = [SABER, NOSUB]
         const zeroPath = "./assets/Zero/";
 
@@ -685,6 +703,7 @@ class Game {
                     let endPath = "";
                     if (mode === JUMPING) terminatingValue = ZEROJUMPINGFRAMES;
                     if (mode === WALL) terminatingValue = ZEROWALLFRAMES;
+                    if (mode === STANDING) terminatingValue = ZEROSTANDINGFRAMES
                     while (counter < terminatingValue) {
 
                         const newAsset = new Image();
@@ -698,6 +717,7 @@ class Game {
                         }
 
                         newAsset.src = zeroPath + endPath + ".png";
+                        console.log(this.assets[ZERO][subMode], subMode)
 
                         this.assets[ZERO][subMode][mode][direction].push(newAsset)
 
