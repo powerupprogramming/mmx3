@@ -1,4 +1,4 @@
-import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES, WALL, WALLFRAMES, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, SPYCOPTERDESTROYEDFRAMES, ZEROSTANDINGFRAMES } from "../constants/AnimationComponentConstants.js";
+import { CHARGING, KNOCKEDBACK, LANDING, PREVSTATE, RIGHT, SHOOTING, STANDING, RUNNING, CLIMBING, JUMPING, LEFT, RUNNINGFRAMES, STANDINGFRAMES, JUMPINGFRAMES, DASHING, DASHINGFRAMES, LEVEL2BUSTER, LEMON, LEVEL1BUSTER, FLYING, SPYCOPTERFRAMES, WALL, WALLFRAMES, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, SPYCOPTERDESTROYEDFRAMES, ZEROSTANDINGFRAMES, SABER, ZEROJUMPINGSABERFRAMES, TELEPORTING, ZEROTELEPORTINGFRAMES } from "../constants/AnimationComponentConstants.js";
 import { DESTROYED } from "../constants/AssetConstants.js";
 import { ANIMATION, COLLISION, RIGIDBODY, POSITION, SPRITE, STATE, HITBOX, CAMERA } from "../constants/ComponentConstants.js";
 
@@ -197,7 +197,11 @@ const CreateZeroAnimationComponent = () => {
                 [JUMPING]: {
                     animationLength: 500,
                     [RIGHT]: ZEROJUMPINGFRAMES,
-                    [LEFT]: ZEROJUMPINGFRAMES
+                    [LEFT]: ZEROJUMPINGFRAMES,
+                    [SABER]: {
+                        [LEFT]: ZEROJUMPINGSABERFRAMES,
+                        [RIGHT]: ZEROJUMPINGSABERFRAMES
+                    }
                 },
                 [STANDING]: {
                     animationLength: 500,
@@ -209,6 +213,12 @@ const CreateZeroAnimationComponent = () => {
                     animationLength: 500,
                     [RIGHT]: ZEROWALLFRAMES,
                     [LEFT]: ZEROWALLFRAMES
+                },
+                [TELEPORTING]: {
+                    hold: 3,
+                    animationLength: 200,
+                    [RIGHT]: ZEROTELEPORTINGFRAMES,
+                    [LEFT]: ZEROJUMPINGFRAMES
                 }
             }
         }

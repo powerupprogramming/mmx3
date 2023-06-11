@@ -1,6 +1,6 @@
 import IntroCinematic from "./cinematics/IntroCinematic.js";
 import Registry from "./classes/Registry.js";
-import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE, WALL, WALLFRAMES, SABER, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, ZEROSTANDINGFRAMES, SPYCOPTERDERBRISFRAMES } from "./constants/AnimationComponentConstants.js";
+import { ADDVELOCITYLEFT, ADDVELOCITYRIGHT, CHANGESTATE, CHANGESUB, CINEMATICS, ENTER, DASHING, DASHINGFRAMES, EXECUTE, JUMPING, JUMPINGFRAMES, LEFT, LEMON, LEVEL1BUSTER, LEVEL2BUSTER, NOSUB, PROJECTILES, RIGHT, RUNNING, RUNNINGFRAMES, SHOOTING, STANDING, STANDINGFRAMES, SPYCOPTERFRAMES, SPYCOPTERDESTROYEDFRAMES, SPYCOPTERMODES, FLYING, PLAYERTYPE, SHOTTYPE, WALL, WALLFRAMES, SABER, ZEROJUMPINGFRAMES, ZEROWALLFRAMES, ZEROSTANDINGFRAMES, SPYCOPTERDERBRISFRAMES, ZEROJUMPINGSABERFRAMES, TELEPORTING, ZEROTELEPORTINGFRAMES, EXIT } from "./constants/AnimationComponentConstants.js";
 import { ALIVE, DEBRIS, DESTROYED, ENEMIES, MEGAMAN, SPYCOPTER, ZERO } from "./constants/AssetConstants.js";
 import { PLAYER, SPRITE } from "./constants/ComponentConstants.js";
 import { ANIMATION, POSITION, RIGIDBODY, STATE } from "./constants/ComponentConstants.js";
@@ -30,6 +30,8 @@ export const PIXELS_PER_METER = 50;
 class Game {
 
     constructor() {
+
+
         this.player = undefined;
         this.registry = new Registry();
         this.gameTime = Date.now();
@@ -128,6 +130,10 @@ class Game {
                     [STANDING]: {
                         [LEFT]: [],
                         [RIGHT]: []
+                    },
+                    [TELEPORTING]: {
+                        [LEFT]: [],
+                        [RIGHT]: []
                     }
                 },
                 [SABER]: {
@@ -218,7 +224,7 @@ class Game {
         this.eventBus[CINEMATICS] = {};
         this.eventBus[CINEMATICS][ENTER] = [];
         this.eventBus[CINEMATICS][EXECUTE] = [];
-        // this.eventBus[CINEMATICS][EXIT] = [];
+        this.eventBus[CINEMATICS][EXIT] = [];
 
         // Set up eventBus, run update once to set up eventbus
         Registry.getSystem(STATE_SYSTEM).initialize(this.eventBus)
@@ -338,8 +344,30 @@ class Game {
 
 
             if (this.eventBus[CINEMATICS][EXECUTE].length > 0) {
-                const { object, args } = this.eventBus[CINEMATICS][EXECUTE][0];
-                object.execute(args);
+                const object = this.eventBus[CINEMATICS][EXECUTE][0].object;
+                const args = this.eventBus[CINEMATICS][EXECUTE][0].args;
+
+                if (object) {
+                    object.execute(args);
+                }
+            }
+
+            if (this.eventBus[CINEMATICS][EXIT].length > 0) {
+
+                const object = this.eventBus[CINEMATICS][EXIT][0].object;
+                const args = this.eventBus[CINEMATICS][EXIT][0].args;
+
+                if (object) {
+                    object.execute(args);
+
+
+                    this.eventBus[CINEMATICS][EXIT].pop();
+
+
+                }
+
+
+
             }
 
 
@@ -625,20 +653,24 @@ class Game {
                     else if (mode === DASHING) terminatingValue = DASHINGFRAMES;
                     else if (mode === WALL) terminatingValue = WALLFRAMES;
                     while (counter < terminatingValue) {
-                        const newAsset = new Image();
+                        try {
+                            const newAsset = new Image();
 
-                        if (subMode === NOSUB) {
-                            endPath = `${mode}/${direction}/${counter}`;
-                        }
-                        else {
-                            endPath = `${mode}/${direction}/${subMode}/${counter}`;
+                            if (subMode === NOSUB) {
+                                endPath = `${mode}/${direction}/${counter}`;
+                            }
+                            else {
+                                endPath = `${mode}/${direction}/${subMode}/${counter}`;
+
+                            }
+                            // For things like landing where this is no sub modes this will lead to an undefined path and image
+                            newAsset.src = basePath + endPath + ".png";
+
+                            this.assets[MEGAMAN][subMode][mode][direction].push(newAsset)
+                        } catch (e) {
 
                         }
-                        // For things like landing where this is no sub modes this will lead to an undefined path and image
-                        newAsset.src = basePath + endPath + ".png";
-                        // console.log(subMode)
-                        // console.log(this.assets[subMode])
-                        this.assets[MEGAMAN][subMode][mode][direction].push(newAsset)
+
                         counter++;
                     }
                 }
@@ -669,16 +701,20 @@ class Game {
                         }
 
                         while (counter < terminatingValue) {
-                            const newAsset = new Image();
-                            console.log("New asset: 1 ", state)
+                            try {
+                                const newAsset = new Image();
 
-                            if (state === NOSUB) {
-                                newAsset.src = `${enemyPath}/alive/${enemy.toLowerCase()}/${mode}/${direction}/${counter}.png`;
-                                this.assets[enemy][state][mode][direction].push(newAsset);
+                                if (state === NOSUB) {
+                                    newAsset.src = `${enemyPath}/alive/${enemy.toLowerCase()}/${mode}/${direction}/${counter}.png`;
+                                    this.assets[enemy][state][mode][direction].push(newAsset);
 
-                            } else {
-                                newAsset.src = `${enemyPath}/${state}/${enemy.toLowerCase()}/${counter}.png`;
-                                this.assets[enemy][state].push(newAsset);
+                                } else {
+                                    newAsset.src = `${enemyPath}/${state}/${enemy.toLowerCase()}/${counter}.png`;
+                                    this.assets[enemy][state].push(newAsset);
+
+                                }
+
+                            } catch (e) {
 
                             }
 
@@ -690,7 +726,7 @@ class Game {
         }
 
         // Load Zero Sprites
-        modes = [JUMPING, WALL, STANDING]
+        modes = [JUMPING, WALL, STANDING, TELEPORTING]
         subModes = [SABER, NOSUB]
         const zeroPath = "./assets/Zero/";
 
@@ -701,9 +737,14 @@ class Game {
                     let counter = 0;
                     let terminatingValue;
                     let endPath = "";
-                    if (mode === JUMPING) terminatingValue = ZEROJUMPINGFRAMES;
+                    if (mode === JUMPING) {
+                        if (subMode === NOSUB) terminatingValue = ZEROJUMPINGFRAMES;
+
+                        if (subMode === SABER) terminatingValue = ZEROJUMPINGSABERFRAMES;
+                    }
                     if (mode === WALL) terminatingValue = ZEROWALLFRAMES;
                     if (mode === STANDING) terminatingValue = ZEROSTANDINGFRAMES
+                    if (mode === TELEPORTING) terminatingValue = ZEROTELEPORTINGFRAMES
                     while (counter < terminatingValue) {
 
                         const newAsset = new Image();
@@ -717,9 +758,12 @@ class Game {
                         }
 
                         newAsset.src = zeroPath + endPath + ".png";
-                        console.log(this.assets[ZERO][subMode], subMode)
+                        try {
+                            this.assets[ZERO][subMode][mode][direction].push(newAsset)
 
-                        this.assets[ZERO][subMode][mode][direction].push(newAsset)
+                        } catch (e) {
+
+                        }
 
                         counter++;
                     }
@@ -737,11 +781,16 @@ class Game {
             // get each shot animation
             for (let j = 0; j < shotFrames[i]; j++) {
                 for (let direction of directions) {
-                    const completeFilePath = shotPath + `${direction}/${i}/${j}.png`
-                    const newAsset = new Image();
-                    newAsset.src = completeFilePath;
-                    // shotframes i could be level 2 buster for example
-                    this.assets[MEGAMAN][PROJECTILES][shotFrames[i]][direction].push(newAsset);
+                    try {
+                        const completeFilePath = shotPath + `${direction}/${i}/${j}.png`
+                        const newAsset = new Image();
+                        newAsset.src = completeFilePath;
+                        // shotframes i could be level 2 buster for example
+                        this.assets[MEGAMAN][PROJECTILES][shotFrames[i]][direction].push(newAsset);
+                    } catch (e) {
+
+                    }
+
                 }
 
             }

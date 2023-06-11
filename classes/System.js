@@ -32,7 +32,7 @@ class MovementSystem extends System {
             const { velocity, acceleration, sumForces, mass, maxV } = RigidBody;
 
             // Only apply to megaman for now
-            if ((entity.type === MEGAMAN || entity.type === DEBRIS) && stopGravity === false) {
+            if ((entity.type === PLAYERTYPE || entity.type === DEBRIS) && stopGravity === false) {
 
                 sumForces.y = mass * 9.8 * PIXELS_PER_METER;
 
@@ -585,10 +585,6 @@ class AnimationSystem extends System {
                 animationLength = Animation.frames.animationLength
             }
 
-
-            const numOfFrames = mode ? Animation.frames[mode][direction] : Animation.frames.numFrames;
-            const Sprite = Registry.getComponent(SPRITE, entity.id);
-
             let target = undefined;
 
             if (entity.type === PLAYERTYPE) target = MEGAMAN;
@@ -596,10 +592,25 @@ class AnimationSystem extends System {
             else if (entity.type === SHOTTYPE) target = MEGAMAN;
             else if (entity.type === SPYCOPTER) target = SPYCOPTER;
 
+            // TODO make change for zero swingin saber in the air
+            let numOfFrames = undefined;
+
+            if (mode) {
+                if (target === ZERO && subMode === SABER) {
+                    numOfFrames = Animation.frames[mode][SABER][direction]
+                } else
+                    numOfFrames = Animation.frames[mode][direction]
+            } else {
+                numOfFrames = Animation.frames.numFrames;
+            }
+            const Sprite = Registry.getComponent(SPRITE, entity.id);
+
+
             if (currentFrame === hold) {
 
 
                 if (subMode) {
+
 
                     Sprite.sprite = assets[target][subMode][mode][direction][currentFrame];
                 }
@@ -800,6 +811,8 @@ class StateSystem extends System {
 
     // {RUNNING: 0 }
     changeState = (newState, id) => {
+        if (newState === undefined || id === undefined) return;
+
         const stateComponent = Registry.getComponent(STATE, id);
 
 

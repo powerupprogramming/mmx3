@@ -20,7 +20,6 @@ class MegamanState {
         const { prevState, currentState, currentSub } = stateComponent;
 
         if (stateComponent) {
-
             if (currentState) {
                 switch (currentState.name) {
                     // case ADDVELOCITY: {
@@ -34,6 +33,7 @@ class MegamanState {
                     case RUNNING: {
                         if (currentState.name !== JUMPING && currentState.name !== CLIMBING) {
                             if (animationComponent) {
+                                console.log("HERE")
                                 // Add to it
                                 rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -125 : 125;
                                 animationComponent.mode = RUNNING;
@@ -51,7 +51,6 @@ class MegamanState {
                         break
                     }
                     case STANDING: {
-
                         if (animationComponent) {
                             animationComponent.mode = STANDING;
                         }
