@@ -82,9 +82,17 @@ class IntroCinematic {
         const cityScapeSprite = CreateSpriteComponent(`${PATH}/city-scape-background.png`, undefined, LOWESTDEPTH)
         registry.createEntity([p, cityScapeSprite])
 
+        // background window 0 & 2
+        p = CreatePositionComponent(1950, 1700, 2000, 1000)
+        registry.createEntity([p, cityScapeSprite])
+
+        // window 1 & 2
+        p = CreatePositionComponent(3450, 1700, 2000, 1000)
+        registry.createEntity([p, cityScapeSprite])
+
 
         // Entrance Bridge
-        p = CreatePositionComponent(0, 3000, 1800, 250)
+        p = CreatePositionComponent(0, 3000, 1800, 300)
         const bridgeSprite = CreateSpriteComponent(`${PATH}/bridge.png`, undefined, MIDGROUND)
         let c = CreateCollisionComponent();
         registry.createEntity([c, bridgeSprite, p])
@@ -92,9 +100,60 @@ class IntroCinematic {
 
 
         // Outer Pillar 
-        p = CreatePositionComponent(1700, 2050, 200, 1225);
+        p = CreatePositionComponent(1700, 2050, 100, 1225);
         const outerPillarSprite = CreateSpriteComponent(`${PATH}/entrance-outer-pillar.png`, undefined, FOREGROUND);
         registry.createEntity([p, outerPillarSprite])
+
+        p = CreatePositionComponent(1700, 1025, 100, 1100);
+        registry.createEntity([p, outerPillarSprite])
+
+        // Entrance
+        // floor
+        p = CreatePositionComponent(1800, 3000, 2480, 300);
+        const floorSprite = CreateSpriteComponent(`${PATH}/floor0.png`, undefined, FOREGROUND);
+        registry.createEntity([p, floorSprite, c]);
+
+        p = CreatePositionComponent(4235, 2745, 600, 600);
+        const floorSprite1 = CreateSpriteComponent(`${PATH}/floor1.png`, undefined, FOREGROUND);
+        registry.createEntity([p, floorSprite1, c]);
+
+
+        // Floor inside background
+        p = CreatePositionComponent(1800, 1600, 3700, 1400);
+        const floor0Window0 = CreateSpriteComponent(`${PATH}/floor0Windows.png`, undefined, BACKGROUND);
+        registry.createEntity([p, floor0Window0]);
+
+        // steps
+        p = CreatePositionComponent(2550, 2490, 350, 510);
+        const step2 = CreateSpriteComponent(`${PATH}/step2.png`, undefined, MIDGROUND);
+        registry.createEntity([p, step2, c]);
+
+        p = CreatePositionComponent(2900, 2620, 350, 380);
+        const step1 = CreateSpriteComponent(`${PATH}/step1.png`, undefined, MIDGROUND);
+        registry.createEntity([p, step1, c]);
+
+        p = CreatePositionComponent(3240, 2740, 350, 260);
+        const step0 = CreateSpriteComponent(`${PATH}/step0.png`, undefined, MIDGROUND);
+        registry.createEntity([p, step0, c]);
+
+
+        // Ladder60
+        p = CreatePositionComponent(4830, 2745, 500, 950);
+        const ladder = CreateSpriteComponent(`${PATH}/ladder0.png`, undefined, MIDGROUND);
+        registry.createEntity([p, ladder, c]);
+
+
+        // back wall
+        p = CreatePositionComponent(5325, 2490, 800, 2000);
+        const lowerBackWall0 = CreateSpriteComponent(`${PATH}/lowerBackWall0.png`, undefined, MIDGROUND);
+        registry.createEntity([p, lowerBackWall0, c]);
+
+        p = CreatePositionComponent(5500, 1585, 370, 915);
+        const upperBackWall0 = CreateSpriteComponent(`${PATH}/upperBackWall0.png`, undefined, MIDGROUND);
+        registry.createEntity([p, upperBackWall0, c]);
+
+
+
 
         // Clouds
         // cloud 1
@@ -447,8 +506,6 @@ class IntroCinematic {
                             }
 
                             if (playerPosition.y >= 2895) {
-                                playerAnimation.frames[JUMPING].hold = undefined;
-
                                 playerPosition.y = 2900;
                                 playerRigidBody.velocity.y = 0;
                             }
@@ -538,6 +595,7 @@ class IntroCinematic {
         for (let i = 0; i < this.debris.length; i++) {
             registry.entitiesToBeKilled.push(this.debris[i]);
         }
+
 
 
         delete this;

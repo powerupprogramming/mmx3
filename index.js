@@ -207,7 +207,7 @@ class Game {
 
     loadLevel = () => {
 
-        let p = CreatePositionComponent(500, 2050, 120, 90);
+        let p = CreatePositionComponent(-500, 2050, 150, 90);
         const a = CreateMegamanXAnimationComponent();
         const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
         let c = CreateCollisionComponent();
@@ -360,9 +360,9 @@ class Game {
                 if (object) {
                     object.execute(args);
 
+                    this.physicsSim.inCinematic = false;
 
                     this.eventBus[CINEMATICS][EXIT].pop();
-
 
                 }
 
@@ -402,7 +402,7 @@ class Game {
         const { key, type } = e;
 
 
-        if (this.player) {
+        if (this.player && this.physicsSim.inCinematic === false) {
             const { id } = this.player;
             const Position = Registry.getComponent(POSITION, id);
             const RigidBody = Registry.getComponent(RIGIDBODY, id);
