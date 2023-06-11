@@ -69,6 +69,10 @@ class IntroCinematic {
         p = CreatePositionComponent(980, 1000, 1000, 1005);
         registry.createEntity([p, skySprite])
 
+        p = CreatePositionComponent(1900, 0, 1000, 1005);
+        registry.createEntity([p, skySprite]);
+
+
 
 
         // Background bridge position
@@ -351,7 +355,7 @@ class IntroCinematic {
                         const a = CreateZeroAnimationComponent();
                         const r = CreateRigidbodyComponent(0, -1200, 0, 0, 0, 0, 100);
                         const s = CreateSpriteComponent(undefined, undefined, MIDGROUND);
-                        const p = CreatePositionComponent(950, 1200, 180, 140); // 150 110
+                        const p = CreatePositionComponent(950, 1200, 220, 180); // 150 110
                         const c = CreateCollisionComponent();
                         this.events.zero = registry.createEntity([a, r, s, p, c], ZERO)
 
@@ -423,13 +427,13 @@ class IntroCinematic {
                             // no sprites 
 
                             // spyCopter fall
-                            copterR.velocity.y = 500;
+                            copterR.velocity.y = 400;
 
                             // zero fall
                             const zeroR = Registry.getComponent(RIGIDBODY, this.events.zero.id);
-                            zeroR.velocity.y = 500;
+                            zeroR.velocity.y = 400;
 
-                            playerRigidBody.velocity.y = 500;
+                            playerRigidBody.velocity.y = 400;
                             this.events.landOnGround = Date.now();
 
                         }
@@ -447,12 +451,12 @@ class IntroCinematic {
                             const zeroR = Registry.getComponent(RIGIDBODY, this.events.zero.id);
                             const zeroA = Registry.getComponent(ANIMATION, this.events.zero.id);
 
-                            if (zeroP.y >= 2897) {
+                            if (zeroP.y >= 2830) {
                                 zeroR.velocity.y = 0;
                                 zeroA.alternatingFrameRange = undefined;
                                 // because messed up sprite crop
-                                zeroP.width = 150;
-                                zeroP.height = 110
+                                zeroP.width = 220;
+                                zeroP.height = 170
                                 zeroA.mode = STANDING;
                             }
                             if (copterP.y >= 2700) {
@@ -461,12 +465,13 @@ class IntroCinematic {
 
                                 if (this.debris.length === 0) {
                                     // Create debris pieces
+                                    // bottom propeller
                                     let p = CreatePositionComponent(copterP.x + 100, copterP.y + copterP.height - 50, 250, 250);
                                     let r = CreateRigidbodyComponent(-700, -800, 0, 0, 0, 0, 200)
                                     let s = CreateSpriteComponent("../assets/Enemies/debris/0.png", undefined, MIDGROUND);
                                     this.debris.push(registry.createEntity([p, r, s], DEBRIS))
 
-
+                                    // piece
                                     p = CreatePositionComponent(copterP.x + 250, copterP.y + 250, 100, 50);
                                     r = CreateRigidbodyComponent(-200, -700, 0, 0, 0, 0, 150)
                                     s = CreateSpriteComponent("../assets/Enemies/debris/1.png", undefined, MIDGROUND);
@@ -478,11 +483,13 @@ class IntroCinematic {
                                     s = CreateSpriteComponent("../assets/Enemies/debris/2.png", undefined, MIDGROUND);
                                     this.debris.push(registry.createEntity([p, r, s], DEBRIS))
 
-                                    p = CreatePositionComponent(copterP.x + copterP.width - 300, copterP.y + 100, 250, 200);
+                                    // head
+                                    p = CreatePositionComponent(copterP.x + copterP.width - 600, copterP.y + 100, 250, 200);
                                     r = CreateRigidbodyComponent(500, -700, 0, 0, 0, 0, 250)
                                     s = CreateSpriteComponent("../assets/Enemies/debris/3.png", undefined, MIDGROUND);
                                     this.debris.push(registry.createEntity([p, r, s], DEBRIS))
 
+                                    // Propeller
                                     p = CreatePositionComponent(copterP.x + 200, copterP.y + 200, 200, 125);
                                     r = CreateRigidbodyComponent(400, -500, 0, 0, 0, 0, 200)
                                     s = CreateSpriteComponent("../assets/Enemies/debris/4.png", undefined, MIDGROUND);
@@ -505,8 +512,12 @@ class IntroCinematic {
 
                             }
 
-                            if (playerPosition.y >= 2895) {
-                                playerPosition.y = 2900;
+                            if (playerRigidBody.velocity.y > 450) {
+                                playerRigidBody.velocity.y = 450;
+                            }
+
+                            if (playerPosition.y >= 2850) {
+                                playerPosition.y = 2880
                                 playerRigidBody.velocity.y = 0;
                             }
 
@@ -536,24 +547,35 @@ class IntroCinematic {
                 // zero teleports away
                 const zeroA = Registry.getComponent(ANIMATION, this.events.zero.id);
                 const zeroP = Registry.getComponent(POSITION, this.events.zero.id);
-                const zeroR = Registry.getComponent(RIGIDBODY, this.events.zero.id);
 
                 // wait
-                if (this.events.chatWithZero + 2000 < Date.now()) {
+                if (this.events.chatWithZero + 3500 < Date.now()) {
                     zeroA.mode = TELEPORTING;
                     // zeroA.currentTimeOfAnimation = Date.now()
                     zeroA.startOfAnimation = Date.now();
                     // zeroA.currentFrame = 0
-                    zeroR.velocity.y = -1000;
 
                     this.events.endIntro = Date.now()
+
+
                 }
 
             }
         }
 
         if (this.events.endIntro !== undefined && this.events.end === undefined) {
+
+            const zeroR = Registry.getComponent(RIGIDBODY, this.events.zero.id);
+            const zeroA = Registry.getComponent(ANIMATION, this.events.zero.id);
+
+            console.log("zero curernt frame: ", zeroA.currentFrame)
+            if (zeroA.currentFrame === 3) {
+                zeroR.velocity.y = -1000;
+
+            }
+
             if (this.events.endIntro + 2000 < Date.now()) {
+
 
                 this.eventBus[CINEMATICS][EXECUTE].pop();
                 this.eventBus[CINEMATICS][EXIT].push({

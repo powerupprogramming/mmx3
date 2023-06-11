@@ -197,9 +197,9 @@ class Game {
         this.loadAssets();
 
 
-        // this.audioObject = new Audio(this.audioPath);
-        // this.audioObject.loop = true;
-        // this.audioObject.play();
+        this.audioObject = new Audio(this.audioPath);
+        this.audioObject.loop = true;
+        this.audioObject.play();
 
 
     }
@@ -207,7 +207,7 @@ class Game {
 
     loadLevel = () => {
 
-        let p = CreatePositionComponent(-500, 2050, 150, 90);
+        let p = CreatePositionComponent(-500, 2050, 180, 120);
         const a = CreateMegamanXAnimationComponent();
         const m = CreateRigidbodyComponent(0, 0, 0, 0, 0, 0, 85);         // in kg
         let c = CreateCollisionComponent();

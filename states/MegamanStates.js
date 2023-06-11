@@ -35,7 +35,7 @@ class MegamanState {
                             if (animationComponent) {
                                 console.log("HERE")
                                 // Add to it
-                                rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -125 : 125;
+                                rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -220 : 220;
                                 animationComponent.mode = RUNNING;
                             }
                         }
@@ -45,7 +45,7 @@ class MegamanState {
                     case DASHING: {
 
                         if (animationComponent && prevState && (prevState.name === STANDING || prevState.name === RUNNING)) {
-                            rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -400 : 400
+                            rigidbodyComponent.velocity.x = animationComponent.direction === LEFT ? -520 : 520
                             animationComponent.mode = DASHING;
                         }
                         break
@@ -58,7 +58,7 @@ class MegamanState {
                     }
                     case JUMPING: {
 
-                        rigidbodyComponent.velocity.y = -300;
+                        rigidbodyComponent.velocity.y = -450;
 
                         if (animationComponent) {
 
