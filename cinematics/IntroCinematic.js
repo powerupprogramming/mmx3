@@ -263,7 +263,7 @@ class IntroCinematic {
                 // when copter in positin place x in position, change state to jump state
                 if (p.x > finalCopterXHoldPosition - 100 && playerState.currentState.name === STANDING && this.events.jumpOnSpyCopter === undefined) {
 
-                    playerPosition.x = 750
+                    playerPosition.x = 650
                     playerPosition.y = 1000;
                     this.eventBus[this.player.id][CHANGESTATE](new JumpingState(0), this.player.id)
                     playerRigidBody.velocity.y = 0;
